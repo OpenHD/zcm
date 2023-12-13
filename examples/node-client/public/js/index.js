@@ -63,16 +63,6 @@ function flush() {
     z.flush(function() { console.log('flushed'); });
 }
 
-function pause() {
-    z.pause(function() { console.log('paused'); });
-}
-
-function resume() {
-    z.resume(function() { console.log('resumed'); });
-}
-
 onload = function(){
     z = zcm.create();
-
-    z.setQueueSize(5);
 }

@@ -13,14 +13,10 @@ export Zcm,
        subscribe,
        unsubscribe,
        publish,
-       pause,
-       resume,
        flush,
        start,
        stop,
        handle,
-       handle_nonblock,
-       set_queue_size,
        write_topology,
        read_bits,
        write_bits,
@@ -252,23 +248,8 @@ function publish(zcm::Zcm, channel::AbstractString, msg::AbstractZcmType)
     publish(zcm, channel, encode(msg))
 end
 
-function pause(zcm::Zcm)
-    ccall(("zcm_pause", "libzcm"), Nothing, (Ptr{Native.Zcm},), zcm)
-end
-
-function resume(zcm::Zcm)
-    ccall(("zcm_resume", "libzcm"), Nothing, (Ptr{Native.Zcm},), zcm)
-end
-
 function flush(zcm::Zcm)
-    while (true)
-        ret = ccall(("zcm_try_flush", "libzcm"), Cint, (Ptr{Native.Zcm},), zcm)
-        if (ret == Cint(0))
-            break
-        else
-            yield()
-        end
-    end
+    ccall(("zcm_flush", "libzcm"), Cint, (Ptr{Native.Zcm},), zcm)
 end
 
 function start(zcm::Zcm)
@@ -277,35 +258,11 @@ function start(zcm::Zcm)
 end
 
 function stop(zcm::Zcm)
-    while (true)
-        ret = ccall(("zcm_try_stop", "libzcm"), Cint, (Ptr{Native.Zcm},), zcm)
-        if (ret == Cint(0))
-            break
-        else
-            yield()
-        end
-    end
+    ccall(("zcm_stop", "libzcm"), Cint, (Ptr{Native.Zcm},), zcm)
 end
 
-function handle(zcm::Zcm)
-    ccall(("zcm_handle", "libzcm"), Cint, (Ptr{Native.Zcm},), zcm)
-end
-
-function handle_nonblock(zcm::Zcm)
-    ccall(("zcm_handle_nonblock", "libzcm"), Cint, (Ptr{Native.Zcm},), zcm)
-end
-
-function set_queue_size(zcm::Zcm, num::Integer)
-    sz = UInt32(num)
-    while (true)
-        ret = ccall(("zcm_try_set_queue_size", "libzcm"), Cint,
-                    (Ptr{Native.Zcm}, UInt32), zcm, sz)
-        if (ret == Cint(0))
-            break
-        else
-            yield()
-        end
-    end
+function handle(zcm::Zcm, timeout:Integer)
+    ccall(("zcm_handle", "libzcm"), Cint, (Cint,), Cint(err))
 end
 
 function write_topology(zcm::Zcm, name::AbstractString)

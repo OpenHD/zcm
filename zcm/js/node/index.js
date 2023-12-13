@@ -41,11 +41,8 @@ var libzcm = new ffi.Library('libzcm', {
     'zcm_try_subscribe':        ['pointer', ['pointer', 'string', 'pointer', 'pointer']],
     'zcm_try_unsubscribe':      ['int',     ['pointer', 'pointer']],
     'zcm_start':                ['void',    ['pointer']],
-    'zcm_try_stop':             ['int',     ['pointer']],
-    'zcm_try_flush':            ['int',     ['pointer']],
-    'zcm_pause':                ['void',    ['pointer']],
-    'zcm_resume':               ['void',    ['pointer']],
-    'zcm_try_set_queue_size':   ['int',     ['pointer', 'int']],
+    'zcm_stop':                 ['int',     ['pointer']],
+    'zcm_flush':                ['int',     ['pointer']],
     'zcm_write_topology':       ['int',     ['pointer', 'string']],
 });
 
@@ -233,19 +230,11 @@ function zcm(zcmtypes, zcmurl)
     }
 
     /**
-     * Forces all incoming and outgoing messages to be flushed to their handlers / to the transport.
-     * @params {doneCb} doneCb - callback for successful flush
+     * Forces all incoming messages to be flushed to their handlers.
      */
-    zcm.prototype.flush = function(doneCb)
+    zcm.prototype.flush = function()
     {
-        setTimeout(function f() {
-            var ret = libzcm.zcm_try_flush(parent.z);
-            if (ret != ZCM_EOK) {
-                setTimeout(f, 0);
-                return;
-            }
-            if (doneCb) doneCb();
-        }, 0)
+        return libzcm.zcm_flush(parent.z);
     }
 
     /**
@@ -258,49 +247,10 @@ function zcm(zcmtypes, zcmurl)
 
     /**
      * Stops the zcm internal threads.
-     * @params {stoppedCb} stoppedCb - callback for successful stop
      */
-    zcm.prototype.stop = function(stoppedCb)
+    zcm.prototype.stop = function()
     {
-        setTimeout(function s() {
-            var ret = libzcm.zcm_try_stop(parent.z);
-            if (ret != ZCM_EOK) {
-                setTimeout(s, 0);
-                return;
-            }
-            if (stoppedCb) stoppedCb();
-        }, 0)
-    }
-
-    /**
-     * Pauses transport publishing and message dispatch
-     */
-    zcm.prototype.pause = function()
-    {
-        libzcm.zcm_pause(parent.z);
-    }
-
-    /**
-     * Resumes transport publishing and message dispatch
-     */
-    zcm.prototype.resume = function()
-    {
-        libzcm.zcm_resume(parent.z);
-    }
-
-    /**
-     * Sets the recv and send queue sizes within zcm
-     */
-    zcm.prototype.setQueueSize = function(sz, cb)
-    {
-        setTimeout(function s() {
-            var ret = libzcm.zcm_try_set_queue_size(parent.z, sz);
-            if (ret != ZCM_EOK) {
-                setTimeout(s, 0);
-                return;
-            }
-            if (cb) cb();
-        }, 0)
+        libzcm.zcm_stop(parent.z);
     }
 
     /**
@@ -321,7 +271,7 @@ function zcm(zcmtypes, zcmurl)
 
 function zcm_create(zcmtypes, zcmurl, http, socketIoOptions = {})
 {
-    var ret = new zcm(zcmtypes, zcmurl);
+    var z = new zcm(zcmtypes, zcmurl);
 
     if (http) {
         var io = require('socket.io')(http, { ...socketIoOptions, path: "/zcm" });
@@ -330,11 +280,11 @@ function zcm_create(zcmtypes, zcmurl, http, socketIoOptions = {})
             var subscriptions = {};
             var nextSub = 0;
             socket.on('client-to-server', function (data) {
-                ret.publish(data.channel, data.msg);
+                z.publish(data.channel, data.msg);
             });
             socket.on('subscribe', function (data, returnSubscription) {
                 var subId = nextSub++;
-                ret.subscribe(data.channel, data.type, function (channel, msg) {
+                z.subscribe(data.channel, data.type, function (channel, msg) {
                     socket.emit('server-to-client', {
                         channel: channel,
                         msg: msg,
@@ -350,29 +300,19 @@ function zcm_create(zcmtypes, zcmurl, http, socketIoOptions = {})
                     successCb();
                     return;
                 }
-                ret.unsubscribe(subscriptions[subId],
+                z.unsubscribe(subscriptions[subId],
                                 function _successCb() {
                                     delete subscriptions[subId];
                                     if (successCb) successCb();
                                 });
             });
             socket.on('flush', function (doneCb) {
-                ret.flush(doneCb);
-            });
-            socket.on('pause', function (cb) {
-                ret.pause();
-                if (cb) cb();
-            });
-            socket.on('resume', function (cb) {
-                ret.resume();
-                if (cb) cb();
-            });
-            socket.on('setQueueSize', function (sz, cb) {
-                ret.setQueueSize(sz, cb);
+                z.flush();
+                doneCb();
             });
             socket.on('disconnect', function () {
                 for (var subId in subscriptions) {
-                    ret.unsubscribe(subscriptions[subId]);
+                    z.unsubscribe(subscriptions[subId]);
                     delete subscriptions[subId];
                 }
                 nextSub = 0;
@@ -381,7 +321,7 @@ function zcm_create(zcmtypes, zcmurl, http, socketIoOptions = {})
         });
     }
 
-    return ret;
+    return z;
 }
 
 exports.create = zcm_create;

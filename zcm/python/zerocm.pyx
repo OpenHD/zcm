@@ -38,18 +38,13 @@ cdef extern from "zcm/zcm.h":
 
     int  zcm_publish(zcm_t* zcm, const char* channel, const uint8_t* data, uint32_t dlen)
 
-    int  zcm_try_flush         (zcm_t* zcm)
+    int  zcm_flush             (zcm_t* zcm)
 
     void zcm_run               (zcm_t* zcm)
     void zcm_start             (zcm_t* zcm)
-    int  zcm_try_stop          (zcm_t* zcm)
-    void zcm_pause             (zcm_t* zcm)
-    void zcm_resume            (zcm_t* zcm)
-    int  zcm_handle            (zcm_t* zcm)
-    int  zcm_try_set_queue_size(zcm_t* zcm, uint32_t numMsgs)
+    int  zcm_stop              (zcm_t* zcm)
+    int  zcm_handle            (zcm_t* zcm, int timeout)
     int  zcm_write_topology    (zcm_t* zcm, const char* name)
-
-    int  zcm_handle_nonblock(zcm_t* zcm)
 
     ctypedef struct zcm_eventlog_t:
         pass
@@ -150,28 +145,17 @@ cdef class ZCM:
         cdef const uint8_t* _data = data
         return zcm_publish(self.zcm, channel.encode('utf-8'), _data, len(data) * sizeof(uint8_t))
     def flush(self):
-        while zcm_try_flush(self.zcm) != ZCM_EOK:
-            time.sleep(0) # yield the gil
+        zcm_flush(self.zcm)
     def run(self):
         zcm_run(self.zcm)
     def start(self):
         zcm_start(self.zcm)
     def stop(self):
-        while zcm_try_stop(self.zcm) != ZCM_EOK:
-            time.sleep(0) # yield the gil
-    def pause(self):
-        zcm_pause(self.zcm)
-    def resume(self):
-        zcm_resume(self.zcm)
-    def handle(self):
-        return zcm_handle(self.zcm)
-    def setQueueSize(self, numMsgs):
-        while zcm_try_set_queue_size(self.zcm, numMsgs) != ZCM_EOK:
-            time.sleep(0) # yield the gil
+        zcm_stop(self.zcm)
+    def handle(self, timeout):
+        return zcm_handle(self.zcm, timeout)
     def writeTopology(self, str name):
         return zcm_write_topology(self.zcm, name.encode('utf-8'))
-    def handleNonblock(self):
-        return zcm_handle_nonblock(self.zcm)
 
 cdef class LogEvent:
     cdef int64_t eventnum

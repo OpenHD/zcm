@@ -139,10 +139,6 @@ int  zcm_handle(zcm_t* zcm, int timeout); /* returns ZCM_EOK normally, error cod
 int zcm_write_topology(zcm_t* zcm, const char* name);
 #endif
 
-/* Non-Blocking Mode Only: Functions checking and dispatching messages
-   Returns ZCM_EOK if a message was dispatched, ZCM_EAGAIN if no messages,
-   error code otherwise */
-int zcm_handle_nonblock(zcm_t* zcm);
 
 
 
@@ -158,14 +154,6 @@ zcm_sub_t* zcm_try_subscribe(zcm_t* zcm, const char* channel, zcm_msg_handler_t 
    Returns ZCM_EOK on success, error code on failure
    Can fail to subscribe if zcm is already running */
 int zcm_try_unsubscribe(zcm_t* zcm, zcm_sub_t* sub);
-/* Nonblocking version of flush (ZCM_EAGAIN if fail, ZCM_EOK if success) as defined
-   above. If you want to guarantee that this function returns ZCM_EOK at some point,
-   you should zcm_pause() first. */
-int zcm_try_flush(zcm_t* zcm);
-#ifndef ZCM_EMBEDDED
-int zcm_try_stop(zcm_t* zcm); /* returns ZCM_EOK on success, error code on failure */
-int zcm_try_set_queue_size(zcm_t* zcm, uint32_t numMsgs); /* returns ZCM_EOK or ZCM_EAGAIN */
-#endif
 /****************************************************************************/
 
 #ifdef __cplusplus

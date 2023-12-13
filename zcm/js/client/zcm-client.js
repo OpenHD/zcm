@@ -78,34 +78,9 @@ var zcm = (function(){
         /**
          * Forces all incoming and outgoing messages to be flushed to their
          * handlers / to the transport.
-         * @params {doneCb} doneCb - callback for successful flush
          */
         function flush(doneCb) {
             socket.emit("flush", doneCb);
-        }
-
-        /**
-         * Pauses transport publishing and message dispatch
-         */
-        function pause(cb)
-        {
-            socket.emit("pause", cb);
-        }
-
-        /**
-         * Resumes transport publishing and message dispatch
-         */
-        function resume(cb)
-        {
-            socket.emit("resume", cb);
-        }
-
-        /**
-         * Sets the recv and send queue sizes within zcm
-         */
-        function setQueueSize(sz, cb)
-        {
-            socket.emit('setQueueSize', sz, cb);
         }
 
         return {
@@ -113,9 +88,6 @@ var zcm = (function(){
             subscribe:      subscribe,
             unsubscribe:    unsubscribe,
             flush:          flush,
-            pause:          pause,
-            resume:         resume,
-            setQueueSize:   setQueueSize,
             getZcmtypes:    getZcmtypes,
         };
     }

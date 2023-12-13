@@ -153,12 +153,12 @@
  *
  *      int update(zcm_trans_t* zt)
  *      --------------------------------------------------------------------
- *         This method is called from the zcm_handle_nonblock() function.
+ *         This method is called from the zcm_handle() function.
  *         This method provides a periodicly-running routine that can perform
  *         updates to the underlying hardware or other general mantainence to
  *         this transport. This method should *never block*. Again, this
- *         method is called from zcm_handle_nonblock() and thus runs at the same
- *         frequency as zcm_handle_nonblock(). Failure to call zcm_handle_nonblock()
+ *         method is called from zcm_handle() and thus runs at the same
+ *         frequency as zcm_handle(). Failure to call zcm_handle()
  *         while using an nonblock transport may cause the transport to work
  *         incorrectly on both message send and recv.
  *

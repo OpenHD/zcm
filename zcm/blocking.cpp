@@ -132,7 +132,7 @@ zcm_blocking_t::zcm_blocking(zcm_t* z_, zcm_trans_t* zt_)
 zcm_blocking_t::~zcm_blocking()
 {
     // Shutdown all threads
-    stop();
+    if (recvMode == RECV_MODE_SPAWN) stop();
 
     // Destroy the transport
     zcm_trans_destroy(zt);
@@ -160,6 +160,7 @@ void zcm_blocking_t::run()
     recvMode = RECV_MODE_RUN;
 
     recvThreadFunc();
+    recvMode = RECV_MODE_NONE;
 }
 
 // TODO: should this call be thread safe?
@@ -176,10 +177,11 @@ void zcm_blocking_t::start()
 
 int zcm_blocking_t::stop()
 {
-    ZCM_ASSERT(recvMode == RECV_MODE_SPAWN);
     done = true;
-    recvThread.join();
-    recvMode = RECV_MODE_NONE;
+    if (recvMode == RECV_MODE_SPAWN) {
+        recvThread.join();
+        recvMode = RECV_MODE_NONE;
+    }
     return ZCM_EOK;
 }
 
@@ -525,11 +527,6 @@ zcm_sub_t* zcm_blocking_try_subscribe(zcm_blocking_t* zcm, const char* channel,
 int zcm_blocking_try_unsubscribe(zcm_blocking_t* zcm, zcm_sub_t* sub)
 {
     return zcm->unsubscribe(sub, false);
-}
-
-int zcm_blocking_try_flush(zcm_blocking_t* zcm)
-{
-    return zcm->flush();
 }
 /****************************************************************************/
 
