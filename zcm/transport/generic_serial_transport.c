@@ -224,6 +224,11 @@ int serial_recvmsg(zcm_trans_generic_serial_t *zt, zcm_msg_t *msg, unsigned time
     goto serial_recvmsg_start; // Not recursing so we dont increase call stack size
 }
 
+int serial_set_queue_size(zcm_trans_generic_serial_t *zt, unsigned num_messages)
+{
+    return ZCM_EUNKNOWN;
+}
+
 int serial_update_rx(zcm_trans_t *_zt)
 {
     zcm_trans_generic_serial_t* zt = cast(_zt);
@@ -258,11 +263,17 @@ static int _serial_update(zcm_trans_t *zt)
     return rxRet == ZCM_EOK ? txRet : rxRet;
 }
 
+static int _serial_set_queue_size(zcm_trans_t *zt, unsigned num_messages)
+{
+    return serial_set_queue_size(cast(zt), num_messages);
+}
+
 static zcm_trans_methods_t methods = {
     &_serial_get_mtu,
     &_serial_sendmsg,
     &_serial_recvmsg_enable,
     &_serial_recvmsg,
+    &_serial_set_queue_size,
     &_serial_update,
     &zcm_trans_generic_serial_destroy,
 };

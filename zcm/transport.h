@@ -88,6 +88,14 @@
  *         and users should only expect accuracy within a few milliseconds. Users
  *         should *not* attempt to use this timing mechanism for real-time events.
  *
+ *      int set_queue_size(zcm_trans_t* zt, unsigned num_messages)
+ *      --------------------------------------------------------------------
+ *         This method instructs the transport that the user would like the
+ *         transport to buffer exactly this many messages at most in between
+ *         successive calls to recvmsg().
+ *         If the transport is able to set its buffers to that size, it should
+ *         return EOK otherwise it should return EAGAIN.
+ *
  *      int update(zcm_trans_t* zt);
  *      --------------------------------------------------------------------
  *         This method is unused (in this mode) and should not be called by the user.
@@ -151,6 +159,14 @@
  *         NOTE: This method does NOT have to work concurrently with recvmsg_enable()
  *         NOTE: The 'timeout' field is ignored
  *
+ *      int set_queue_size(zcm_trans_t* zt, unsigned num_messages)
+ *      --------------------------------------------------------------------
+ *         This method instructs the transport that the user would like the
+ *         transport to buffer exactly this many messages at most in between
+ *         successive calls to recvmsg().
+ *         If the transport is able to set its buffers to that size, it should
+ *         return EOK otherwise it should return EAGAIN.
+ *
  *      int update(zcm_trans_t* zt)
  *      --------------------------------------------------------------------
  *         This method is called from the zcm_handle() function.
@@ -211,6 +227,7 @@ struct zcm_trans_methods_t
     int     (*sendmsg)(zcm_trans_t* zt, zcm_msg_t msg);
     int     (*recvmsg_enable)(zcm_trans_t* zt, const char* channel, bool enable);
     int     (*recvmsg)(zcm_trans_t* zt, zcm_msg_t* msg, unsigned timeout);
+    int     (*set_queue_size)(zcm_trans_t* zt, unsigned num_messages);
     int     (*update)(zcm_trans_t* zt);
     void    (*destroy)(zcm_trans_t* zt);
 };
@@ -227,6 +244,9 @@ static INLINE int zcm_trans_recvmsg_enable(zcm_trans_t* zt, const char* channel,
 
 static INLINE int zcm_trans_recvmsg(zcm_trans_t* zt, zcm_msg_t* msg, unsigned timeout)
 { return zt->vtbl->recvmsg(zt, msg, timeout); }
+
+static INLINE int zcm_trans_set_queue_size(zcm_trans_t* zt, unsigned num_messages)
+{ return zt->vtbl->set_queue_size(zt, num_messages); }
 
 static INLINE int zcm_trans_update(zcm_trans_t* zt)
 { return zt->vtbl->update(zt); }

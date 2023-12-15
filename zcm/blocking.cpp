@@ -68,6 +68,7 @@ struct zcm_blocking
     void start();
     void stop();
     int handle(unsigned timeout);
+    int setQueueSize(unsigned numMsgs);
 
     int publish(const char* channel, const uint8_t* data, uint32_t len);
     zcm_sub_t* subscribe(const string& channel, zcm_msg_handler_t cb, void* usr, bool block);
@@ -186,6 +187,15 @@ int zcm_blocking_t::handle(unsigned timeoutMs)
 {
     if (recvMode != RECV_MODE_NONE) return ZCM_EINVALID;
     return dispatchOneMsg(timeoutMs);
+}
+
+int zcm_blocking_t::setQueueSize(unsigned numMsgs)
+{
+    // RRR (Bendes): Need to decide how we handle locking here.
+    //               Maybe we just say that the thread.
+    //               This seems a bit restrictive
+    if (recvMode != RECV_MODE_NONE) return ZCM_EINVALID;
+    return zcm_trans_set_queue_size(zt, numMsgs);
 }
 
 int zcm_blocking_t::publish(const char* channel, const uint8_t* data, uint32_t len)
@@ -445,6 +455,11 @@ void zcm_blocking_stop(zcm_blocking_t* zcm)
 int zcm_blocking_handle(zcm_blocking_t* zcm, unsigned timeout)
 {
     return zcm->handle(timeout);
+}
+
+int zcm_blocking_set_queue_size(zcm_blocking_t* zcm, unsigned num_messages)
+{
+    return zcm->setQueueSize(num_messages);
 }
 
 int zcm_blocking_write_topology(zcm_blocking_t* zcm, const char* name)

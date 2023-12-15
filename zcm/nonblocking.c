@@ -209,6 +209,11 @@ int zcm_nonblocking_handle(zcm_nonblocking_t* zcm)
     return ZCM_EOK;
 }
 
+int zcm_nonblocking_set_queue_size(zcm_nonblocking_t* zcm, unsigned num_messages)
+{
+    return zcm_trans_set_queue_size(zcm->zt, num_messages);
+}
+
 #ifndef ZCM_EMBEDDED
 int zcm_nonblocking_write_topology(zcm_nonblocking_t* zcm, const char* name)
 {

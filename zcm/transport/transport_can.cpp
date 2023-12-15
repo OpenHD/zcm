@@ -243,6 +243,11 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return ZCM_EAGAIN;
     }
 
+    int set_queue_size(unsigned num_messages)
+    {
+        return ZCM_EUNKNOWN;
+    }
+
     /********************** STATICS **********************/
     static zcm_trans_methods_t methods;
     static ZCM_TRANS_CLASSNAME *cast(zcm_trans_t *zt)
@@ -263,6 +268,9 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     static int _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, unsigned timeout)
     { return cast(zt)->recvmsg(msg, timeout); }
 
+    static int _set_queue_size(zcm_trans_t *zt, unsigned num_messages)
+    { return cast(zt)->set_queue_size(num_messages); }
+
     static void _destroy(zcm_trans_t *zt)
     { delete cast(zt); }
 
@@ -275,6 +283,7 @@ zcm_trans_methods_t ZCM_TRANS_CLASSNAME::methods = {
     &ZCM_TRANS_CLASSNAME::_sendmsg,
     &ZCM_TRANS_CLASSNAME::_recvmsg_enable,
     &ZCM_TRANS_CLASSNAME::_recvmsg,
+    &ZCM_TRANS_CLASSNAME::_set_queue_size,
     NULL,
     &ZCM_TRANS_CLASSNAME::_destroy,
 };

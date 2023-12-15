@@ -81,10 +81,10 @@ struct UDP
     bool init();
     ~UDP();
 
-    int handle();
-
     int sendmsg(zcm_msg_t msg);
     int recvmsg(zcm_msg_t *msg, unsigned timeoutMs);
+
+    int setQueueSize(unsigned numMsgs);
 
   private:
     // These returns non-null when a full message has been received
@@ -388,6 +388,11 @@ int UDP::recvmsg(zcm_msg_t *msg, unsigned timeoutMs)
     return ZCM_EOK;
 }
 
+int UDP::setQueueSize(unsigned numMsgs)
+{
+    return ZCM_EUNKNOWN;
+}
+
 UDP::~UDP()
 {
     if (m) pool.freeMessage(m);
@@ -474,6 +479,9 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     static int _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, unsigned timeout)
     { return cast(zt)->udp.recvmsg(msg, timeout); }
 
+    static int _set_queue_size(zcm_trans_t *zt, unsigned num_messages)
+    { return cast(zt)->udp.setQueueSize(num_messages); }
+
     static void _destroy(zcm_trans_t *zt)
     { delete cast(zt); }
 
@@ -486,6 +494,7 @@ zcm_trans_methods_t ZCM_TRANS_CLASSNAME::methods = {
     &ZCM_TRANS_CLASSNAME::_sendmsg,
     &ZCM_TRANS_CLASSNAME::_recvmsgEnable,
     &ZCM_TRANS_CLASSNAME::_recvmsg,
+    &ZCM_TRANS_CLASSNAME::_set_queue_size,
     NULL, // update
     &ZCM_TRANS_CLASSNAME::_destroy,
 };

@@ -257,6 +257,25 @@ int zcm_handle(zcm_t* zcm, unsigned timeout)
     return ret;
 }
 
+int zcm_set_queue_size(zcm_t* zcm, unsigned num_messages)
+{
+    int ret = ZCM_EUNKNOWN;
+#ifndef ZCM_EMBEDDED
+    switch (zcm->type) {
+        case ZCM_BLOCKING:
+            ret = zcm_blocking_set_queue_size(zcm->impl, num_messages);
+            break;
+        case ZCM_NONBLOCKING:
+            ret = zcm_nonblocking_set_queue_size(zcm->impl, num_messages);
+            break;
+    }
+#else
+    ZCM_ASSERT(zcm->type == ZCM_NONBLOCKING);
+    ret = zcm_nonblocking_set_queue_size(zcm->impl, num_messages);
+#endif
+    return ret;
+}
+
 #ifndef ZCM_EMBEDDED
 void zcm_start(zcm_t* zcm)
 {

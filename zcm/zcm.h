@@ -124,12 +124,20 @@ int zcm_publish(zcm_t* zcm, const char* channel, const uint8_t* data, uint32_t l
 /* Dispatches a single incoming message if available.
  * Returns ZCM_EOK if a message was dispatched, error code on failure.
  * timeout is in units of milliseconds */
-int  zcm_handle(zcm_t* zcm, unsigned timeout);
+int zcm_handle(zcm_t* zcm, unsigned timeout);
+
+/* Request that the underlying transport queue at least this many messages.
+ * Messages will accumulate unless:
+ *  - zcm_handle() is called repeatedly
+ *  - zcm_run() was called
+ *  - zcm_start() was called once or since the most recent zcm_stop() */
+int zcm_set_queue_size(zcm_t* zcm, unsigned num_messages);
 
 #ifndef ZCM_EMBEDDED
 /* Blocking Mode Only: Functions for controlling the message dispatch loop */
 void zcm_run(zcm_t* zcm);
 void zcm_start(zcm_t* zcm);
+// This function may be called if zcm_run() is currently running in another thread
 void zcm_stop(zcm_t* zcm);
 
 /* Write topology file to filename. Returns ZCM_EOK normally, error code on failure */
