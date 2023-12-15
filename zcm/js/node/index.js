@@ -41,8 +41,7 @@ var libzcm = new ffi.Library('libzcm', {
     'zcm_try_subscribe':        ['pointer', ['pointer', 'string', 'pointer', 'pointer']],
     'zcm_try_unsubscribe':      ['int',     ['pointer', 'pointer']],
     'zcm_start':                ['void',    ['pointer']],
-    'zcm_stop':                 ['int',     ['pointer']],
-    'zcm_flush':                ['int',     ['pointer']],
+    'zcm_stop':                 ['void',     ['pointer']],
     'zcm_write_topology':       ['int',     ['pointer', 'string']],
 });
 
@@ -230,14 +229,6 @@ function zcm(zcmtypes, zcmurl)
     }
 
     /**
-     * Forces all incoming messages to be flushed to their handlers.
-     */
-    zcm.prototype.flush = function()
-    {
-        return libzcm.zcm_flush(parent.z);
-    }
-
-    /**
      * Starts the zcm internal threads. Called by default on creation
      */
     zcm.prototype.start = function()
@@ -305,10 +296,6 @@ function zcm_create(zcmtypes, zcmurl, http, socketIoOptions = {})
                                     delete subscriptions[subId];
                                     if (successCb) successCb();
                                 });
-            });
-            socket.on('flush', function (doneCb) {
-                z.flush();
-                doneCb();
             });
             socket.on('disconnect', function () {
                 for (var subId in subscriptions) {

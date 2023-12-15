@@ -117,23 +117,20 @@ zcm_sub_t* zcm_subscribe(zcm_t* zcm, const char* channel, zcm_msg_handler_t cb, 
    Returns ZCM_EOK on success, error code on failure */
 int zcm_unsubscribe(zcm_t* zcm, zcm_sub_t* sub);
 
-/* Publish a zcm message buffer. Note: the message may not be completely
-   sent after this call has returned. To block until the messages are transmitted,
-   call the zcm_flush() method.
-   Returns ZCM_EOK on success, error code on failure */
+/* Publish a zcm message buffer.
+ * Returns ZCM_EOK on success, error code on failure */
 int zcm_publish(zcm_t* zcm, const char* channel, const uint8_t* data, uint32_t len);
 
-/* Block until all published messages have been sent even if the underlying
-   transport is nonblocking. Additionally, dispatches all messages that have
-   already been received sequentially in this thread. */
-void zcm_flush(zcm_t* zcm);
+/* Dispatches a single incoming message if available.
+ * Returns ZCM_EOK if a message was dispatched, error code on failure.
+ * timeout is in units of milliseconds */
+int  zcm_handle(zcm_t* zcm, unsigned timeout);
 
 #ifndef ZCM_EMBEDDED
 /* Blocking Mode Only: Functions for controlling the message dispatch loop */
 void zcm_run(zcm_t* zcm);
 void zcm_start(zcm_t* zcm);
 void zcm_stop(zcm_t* zcm);
-int  zcm_handle(zcm_t* zcm, int timeout); /* returns ZCM_EOK normally, error code on failure. */
 
 /* Write topology file to filename. Returns ZCM_EOK normally, error code on failure */
 int zcm_write_topology(zcm_t* zcm, const char* name);

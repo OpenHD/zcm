@@ -213,7 +213,6 @@ JNIEXPORT jint JNICALL Java_zcm_zcm_ZCMJNI_handle
     Internal *I = getNativePtr(env, self);
     assert(I);
 
+    if (timeoutJ < 0) return ZCM_EINVALID;
     return zcm_handle(I->zcm, timeoutJ);
 }
-
-PASS_THROUGH_FUNC(flush, flush, void, ()V)

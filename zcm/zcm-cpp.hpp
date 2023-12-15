@@ -42,7 +42,6 @@ class ZCM
     virtual inline int  handle(int timeout);
     virtual inline int  writeTopology(const std::string& name);
     #endif
-    virtual inline void flush();
 
   public:
     inline int publish(const std::string& channel, const uint8_t* data, uint32_t len);

@@ -75,19 +75,11 @@ var zcm = (function(){
             if (successCb) successCb(false);
         }
 
-        /**
-         * Forces all incoming and outgoing messages to be flushed to their
-         * handlers / to the transport.
-         */
-        function flush(doneCb) {
-            socket.emit("flush", doneCb);
-        }
 
         return {
             publish:        publish,
             subscribe:      subscribe,
             unsubscribe:    unsubscribe,
-            flush:          flush,
             getZcmtypes:    getZcmtypes,
         };
     }

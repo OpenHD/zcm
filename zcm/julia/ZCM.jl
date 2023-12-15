@@ -13,7 +13,6 @@ export Zcm,
        subscribe,
        unsubscribe,
        publish,
-       flush,
        start,
        stop,
        handle,
@@ -27,8 +26,7 @@ export Zcm,
        read_event_at_offset,
        write_event
 
-import Base: flush,
-             fieldnames,
+import Base: fieldnames,
              unsafe_convert
 
 @static if VERSION < v"0.7.0-"
@@ -248,17 +246,13 @@ function publish(zcm::Zcm, channel::AbstractString, msg::AbstractZcmType)
     publish(zcm, channel, encode(msg))
 end
 
-function flush(zcm::Zcm)
-    ccall(("zcm_flush", "libzcm"), Cint, (Ptr{Native.Zcm},), zcm)
-end
-
 function start(zcm::Zcm)
     @warn "Threaded interface was partially broken by Julia 1.6 : you cannot put printouts in handlers"
     ccall(("zcm_start", "libzcm"), Nothing, (Ptr{Native.Zcm},), zcm)
 end
 
 function stop(zcm::Zcm)
-    ccall(("zcm_stop", "libzcm"), Cint, (Ptr{Native.Zcm},), zcm)
+    ccall(("zcm_stop", "libzcm"), Nothing, (Ptr{Native.Zcm},), zcm)
 end
 
 function handle(zcm::Zcm, timeout:Integer)

@@ -66,13 +66,12 @@ struct zcm_blocking
 
     void run();
     void start();
-    int stop();
-    int handle(int timeout);
+    void stop();
+    int handle(unsigned timeout);
 
-    int publish(const string& channel, const uint8_t* data, uint32_t len);
+    int publish(const char* channel, const uint8_t* data, uint32_t len);
     zcm_sub_t* subscribe(const string& channel, zcm_msg_handler_t cb, void* usr, bool block);
     int unsubscribe(zcm_sub_t* sub, bool block);
-    int flush();
 
     int writeTopology(string name);
 
@@ -82,7 +81,7 @@ struct zcm_blocking
     bool startRecvThread();
 
     void dispatchMsg(const zcm_msg_t& msg);
-    int dispatchOneMsg(int timeout);
+    int dispatchOneMsg(unsigned timeout);
 
     bool deleteSubEntry(zcm_sub_t* sub, size_t nentriesleft);
     bool deleteFromSubList(SubList& slist, zcm_sub_t* sub);
@@ -93,9 +92,7 @@ struct zcm_blocking
     unordered_map<string, SubList> subsRegex;
     size_t mtu;
 
-    mutex receivedTopologyMutex;
     zcm::TopologyMap receivedTopologyMap;
-    mutex sentTopologyMutex;
     zcm::TopologyMap sentTopologyMap;
 
     // These 2 mutexes used to implement a read-write style infrastructure on the subscription
@@ -175,33 +172,33 @@ void zcm_blocking_t::start()
     recvThread = thread{&zcm_blocking::recvThreadFunc, this};
 }
 
-int zcm_blocking_t::stop()
+void zcm_blocking_t::stop()
 {
     done = true;
     if (recvMode == RECV_MODE_SPAWN) {
         recvThread.join();
         recvMode = RECV_MODE_NONE;
     }
-    return ZCM_EOK;
+    while (handle(0) == ZCM_EOK);
 }
 
-int zcm_blocking_t::handle(int timeout)
+int zcm_blocking_t::handle(unsigned timeoutMs)
 {
     if (recvMode != RECV_MODE_NONE) return ZCM_EINVALID;
-    return dispatchOneMsg(timeout);
+    return dispatchOneMsg(timeoutMs);
 }
 
-int zcm_blocking_t::publish(const string& channel, const uint8_t* data, uint32_t len)
+int zcm_blocking_t::publish(const char* channel, const uint8_t* data, uint32_t len)
 {
     // Check the validity of the request
     if (len > mtu) return ZCM_EINVALID;
-    if (channel.size() > ZCM_CHANNEL_MAXLEN) return ZCM_EINVALID;
+    if (strlen(channel) > ZCM_CHANNEL_MAXLEN) return ZCM_EINVALID;
 
     zcm_msg_t msg = {
         .utime = TimeUtil::utime(),
-        .channel = channel.c_str(),
+        .channel = channel,
         .len = len,
-        // const cast ok as sendmsg guaranteed to not modify data
+        // cast await const ok as sendmsg guaranteed to not modify data
         .buf = (uint8_t*)data,
     };
     int ret = zcm_trans_sendmsg(zt, msg);
@@ -211,10 +208,7 @@ int zcm_blocking_t::publish(const string& channel, const uint8_t* data, uint32_t
     int64_t hashBE = 0, hashLE = 0;
     if (__int64_t_decode_array(data, 0, len, &hashBE, 1) == 8 &&
         __int64_t_decode_little_endian_array(data, 0, len, &hashLE, 1) == 8) {
-        unique_lock<mutex> lk(sentTopologyMutex, defer_lock);
-        if (lk.try_lock()) {
-            sentTopologyMap[channel].emplace(hashBE, hashLE);
-        }
+        sentTopologyMap[channel].emplace(hashBE, hashLE);
     }
 #endif
 
@@ -297,55 +291,18 @@ int zcm_blocking_t::unsubscribe(zcm_sub_t* sub, bool block)
     return ZCM_EOK;
 }
 
-int zcm_blocking_t::flush()
-{
-    switch (recvMode) {
-        case RECV_MODE_NONE:
-            while (dispatchOneMsg(0));
-            return ZCM_EOK;
-        case RECV_MODE_RUN:
-            return ZCM_EINVALID;
-        case RECV_MODE_SPAWN:
-            // RRR (Bendes): don't know how to handle this yet
-            return ZCM_EINVALID;
-    }
-    return ZCM_EINVALID;
-}
-
 void zcm_blocking_t::recvThreadFunc()
 {
     SET_THREAD_NAME("ZeroCM_receiver");
     while (!done) dispatchOneMsg(RECV_TIMEOUT);
 }
 
-int zcm_blocking_t::dispatchOneMsg(int timeout)
+int zcm_blocking_t::dispatchOneMsg(unsigned timeout)
 {
     zcm_msg_t msg;
     int rc = zcm_trans_recvmsg(zt, &msg, timeout);
     if (done) return ZCM_EINTR;
     if (rc != ZCM_EOK) return rc;
-    {
-        unique_lock<mutex> lk(subRecvMutex);
-
-        // Check if message matches a non regex channel
-        auto it = subs.find(msg.channel);
-        if (it == subs.end()) {
-            // Check if message matches a regex channel
-            bool foundRegex = false;
-            for (auto& it : subsRegex) {
-                for (auto& sub : it.second) {
-                    regex* r = (regex*)sub->regexobj;
-                    if (regex_match(msg.channel, *r)) {
-                        foundRegex = true;
-                        break;
-                    }
-                }
-                if (foundRegex) break;
-            }
-            // No subscription actually wants the message
-            if (!foundRegex) return ZCM_EOK;
-        }
-    }
     dispatchMsg(msg);
     return ZCM_EOK;
 }
@@ -432,17 +389,8 @@ bool zcm_blocking_t::deleteFromSubList(SubList& slist, zcm_sub_t* sub)
 
 int zcm_blocking_t::writeTopology(string name)
 {
-    decltype(receivedTopologyMap) _receivedTopologyMap;
-    {
-        unique_lock<mutex> lk(receivedTopologyMutex);
-        _receivedTopologyMap = receivedTopologyMap;
-    }
-    decltype(sentTopologyMap) _sentTopologyMap;
-    {
-        unique_lock<mutex> lk(sentTopologyMutex);
-        _sentTopologyMap = sentTopologyMap;
-    }
-    return zcm::writeTopology(name, _receivedTopologyMap, _sentTopologyMap);
+    if (recvMode != RECV_MODE_NONE) return ZCM_EUNKNOWN;
+    return zcm::writeTopology(name, receivedTopologyMap, sentTopologyMap);
 }
 
 /////////////// C Interface Functions ////////////////
@@ -479,11 +427,6 @@ int zcm_blocking_unsubscribe(zcm_blocking_t* zcm, zcm_sub_t* sub)
     return zcm->unsubscribe(sub, true);
 }
 
-void zcm_blocking_flush(zcm_blocking_t* zcm)
-{
-    zcm->flush();
-}
-
 void zcm_blocking_run(zcm_blocking_t* zcm)
 {
     return zcm->run();
@@ -499,7 +442,7 @@ void zcm_blocking_stop(zcm_blocking_t* zcm)
     zcm->stop();
 }
 
-int zcm_blocking_handle(zcm_blocking_t* zcm, int timeout)
+int zcm_blocking_handle(zcm_blocking_t* zcm, unsigned timeout)
 {
     return zcm->handle(timeout);
 }

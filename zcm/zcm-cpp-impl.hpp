@@ -130,11 +130,6 @@ inline int ZCM::writeTopology(const std::string& name)
 }
 #endif
 
-inline void ZCM::flush()
-{
-    zcm_flush(zcm);
-}
-
 inline int ZCM::publish(const std::string& channel, const uint8_t* data, uint32_t len)
 {
     return publishRaw(channel, data, len);

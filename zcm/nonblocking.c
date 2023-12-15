@@ -198,7 +198,7 @@ int zcm_nonblocking_handle(zcm_nonblocking_t* zcm)
     int ret;
     zcm_msg_t msg;
 
-    /* Perform any required traansport-level updates */
+    /* Perform any required transport-level updates */
     zcm_trans_update(zcm->zt);
 
     /* Try to receive a messages from the transport and dispatch them */
@@ -207,17 +207,6 @@ int zcm_nonblocking_handle(zcm_nonblocking_t* zcm)
     dispatch_message(zcm, &msg);
 
     return ZCM_EOK;
-}
-
-void zcm_nonblocking_flush(zcm_nonblocking_t* zcm)
-{
-    /* Call twice because we need to make sure publish and subscribe are both handled */
-    zcm_trans_update(zcm->zt);
-    zcm_trans_update(zcm->zt);
-
-    zcm_msg_t msg;
-    while (zcm_trans_recvmsg(zcm->zt, &msg, 0) == ZCM_EOK)
-        dispatch_message(zcm, &msg);
 }
 
 #ifndef ZCM_EMBEDDED

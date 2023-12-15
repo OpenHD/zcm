@@ -26,7 +26,7 @@ void zcm_blocking_flush(zcm_blocking_t* zcm);
 void zcm_blocking_run(zcm_blocking_t* zcm);
 void zcm_blocking_start(zcm_blocking_t* zcm);
 void zcm_blocking_stop(zcm_blocking_t* zcm);
-int  zcm_blocking_handle(zcm_blocking_t* zcm, int timeout);
+int  zcm_blocking_handle(zcm_blocking_t* zcm, unsigned timeout);
 
 int zcm_blocking_write_topology(zcm_blocking_t* zcm, const char* name);
 

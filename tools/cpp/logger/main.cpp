@@ -675,10 +675,7 @@ int main(int argc, char *argv[])
     while (!done) logger.flushWhenReady();
 
     ZCM_DEBUG("Stopping zcms");
-    for (auto& z : zcms) {
-        z->stop();
-        z->flush();
-    }
+    for (auto& z : zcms) z->stop();
 
     cerr << "Logger exiting" << endl;
 
