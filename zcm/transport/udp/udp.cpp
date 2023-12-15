@@ -479,8 +479,8 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     static int _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, unsigned timeout)
     { return cast(zt)->udp.recvmsg(msg, timeout); }
 
-    static int _set_queue_size(zcm_trans_t *zt, unsigned num_messages)
-    { return cast(zt)->udp.setQueueSize(num_messages); }
+    static int _setQueueSize(zcm_trans_t *zt, unsigned numMsgs)
+    { return cast(zt)->udp.setQueueSize(numMsgs); }
 
     static void _destroy(zcm_trans_t *zt)
     { delete cast(zt); }
@@ -494,7 +494,7 @@ zcm_trans_methods_t ZCM_TRANS_CLASSNAME::methods = {
     &ZCM_TRANS_CLASSNAME::_sendmsg,
     &ZCM_TRANS_CLASSNAME::_recvmsgEnable,
     &ZCM_TRANS_CLASSNAME::_recvmsg,
-    &ZCM_TRANS_CLASSNAME::_set_queue_size,
+    &ZCM_TRANS_CLASSNAME::_setQueueSize,
     NULL, // update
     &ZCM_TRANS_CLASSNAME::_destroy,
 };

@@ -243,7 +243,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return ZCM_EAGAIN;
     }
 
-    int set_queue_size(unsigned num_messages)
+    int setQueueSize(unsigned numMsgs)
     {
         return ZCM_EUNKNOWN;
     }
@@ -262,14 +262,14 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     static int _sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
     { return cast(zt)->sendmsg(msg); }
 
-    static int _recvmsg_enable(zcm_trans_t *zt, const char *channel, bool enable)
+    static int _recvmsgEnable(zcm_trans_t *zt, const char *channel, bool enable)
     { return cast(zt)->recvmsgEnable(channel, enable); }
 
     static int _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, unsigned timeout)
     { return cast(zt)->recvmsg(msg, timeout); }
 
-    static int _set_queue_size(zcm_trans_t *zt, unsigned num_messages)
-    { return cast(zt)->set_queue_size(num_messages); }
+    static int _setQueueSize(zcm_trans_t *zt, unsigned numMsgs)
+    { return cast(zt)->setQueueSize(numMsgs); }
 
     static void _destroy(zcm_trans_t *zt)
     { delete cast(zt); }
@@ -281,9 +281,9 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 zcm_trans_methods_t ZCM_TRANS_CLASSNAME::methods = {
     &ZCM_TRANS_CLASSNAME::_get_mtu,
     &ZCM_TRANS_CLASSNAME::_sendmsg,
-    &ZCM_TRANS_CLASSNAME::_recvmsg_enable,
+    &ZCM_TRANS_CLASSNAME::_recvmsgEnable,
     &ZCM_TRANS_CLASSNAME::_recvmsg,
-    &ZCM_TRANS_CLASSNAME::_set_queue_size,
+    &ZCM_TRANS_CLASSNAME::_setQueueSize,
     NULL,
     &ZCM_TRANS_CLASSNAME::_destroy,
 };

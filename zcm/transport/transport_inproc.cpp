@@ -138,7 +138,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     static int _sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
     { return cast(zt)->sendmsg(msg); }
 
-    static int _recvmsg_enable(zcm_trans_t *zt, const char *channel, bool enable)
+    static int _recvmsgEnable(zcm_trans_t *zt, const char *channel, bool enable)
     { return cast(zt)->recvmsg_enable(channel, enable); }
 
     static int _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, unsigned timeout)
@@ -160,7 +160,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 zcm_trans_methods_t ZCM_TRANS_CLASSNAME::methods = {
     &ZCM_TRANS_CLASSNAME::_get_mtu,
     &ZCM_TRANS_CLASSNAME::_sendmsg,
-    &ZCM_TRANS_CLASSNAME::_recvmsg_enable,
+    &ZCM_TRANS_CLASSNAME::_recvmsgEnable,
     &ZCM_TRANS_CLASSNAME::_recvmsg,
     &ZCM_TRANS_CLASSNAME::_setQueueSize,
     &ZCM_TRANS_CLASSNAME::_update,
