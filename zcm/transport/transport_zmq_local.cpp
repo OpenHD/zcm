@@ -58,7 +58,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     Type type;
 
     string subnet;
-    int pubhwm = 1000, subhwm = 1000;
+    int pubhwm = 0, subhwm = 100;
     uint64_t rescanPeriodUs = 250e3;
 
     unordered_map<string, pair<void*,lockfile_t*>> pubsocks;
@@ -490,7 +490,23 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     int setQueueSize(unsigned numMsgs)
     {
-        return ZCM_EUNKNOWN;
+        unique_lock<mutex> lk(mut);
+
+        // RRR (Bendes): Evenly spread the buffer across all subscriptions?
+        subhwm = numMsgs / subsocks.size();
+        // RRR (Bendes): Or buffer that many messages per subscription?
+        subhwm = numMsgs;
+
+        for (auto& elt : subsocks) {
+            auto& sock = elt.second.first;
+            int rc;
+            rc = zmq_setsockopt(sock, ZMQ_RCVHWM, &subhwm, sizeof(subhwm));
+            if (rc == -1) {
+                ZCM_DEBUG("failed to set sub high water mark: %s", zmq_strerror(errno));
+                return nullptr;
+            }
+            return ZCM_EUNKNOWN;
+        }
     }
 
     /********************** STATICS **********************/
