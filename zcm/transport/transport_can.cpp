@@ -245,7 +245,13 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     int setQueueSize(unsigned numMsgs)
     {
-        return ZCM_EUNKNOWN;
+        // kernel buffers have 2x overhead on buffers for internal bookkeeping
+        int recvQueueSize = MTU * numMsgs * 2;
+        if (setsockopt(soc, SOL_SOCKET, SO_RCVBUF,
+                       (void *)&recvQueueSize, sizeof(recvQueueSize)) < 0) {
+            return ZCM_EUNKNOWN;
+        }
+        return ZCM_EOK;
     }
 
     /********************** STATICS **********************/

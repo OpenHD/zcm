@@ -490,23 +490,21 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     int setQueueSize(unsigned numMsgs)
     {
-        unique_lock<mutex> lk(mut);
-
         // RRR (Bendes): Evenly spread the buffer across all subscriptions?
         subhwm = numMsgs / subsocks.size();
         // RRR (Bendes): Or buffer that many messages per subscription?
         subhwm = numMsgs;
 
+        bool succ = true;
+
         for (auto& elt : subsocks) {
             auto& sock = elt.second.first;
             int rc;
             rc = zmq_setsockopt(sock, ZMQ_RCVHWM, &subhwm, sizeof(subhwm));
-            if (rc == -1) {
-                ZCM_DEBUG("failed to set sub high water mark: %s", zmq_strerror(errno));
-                return nullptr;
-            }
-            return ZCM_EUNKNOWN;
+            if (rc == -1) succ = false;
         }
+
+        return succ ? ZCM_EOK : ZCM_EUNKNOWN;
     }
 
     /********************** STATICS **********************/
