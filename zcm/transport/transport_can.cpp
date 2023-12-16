@@ -198,7 +198,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     }
 
     /********************** METHODS **********************/
-    size_t get_mtu()
+    size_t getMtu()
     {
         return zcm_trans_get_mtu(this->gst);
     }
@@ -246,7 +246,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     int setQueueSize(unsigned numMsgs)
     {
         // kernel buffers have 2x overhead on buffers for internal bookkeeping
-        int recvQueueSize = MTU * numMsgs * 2;
+        int recvQueueSize = getMtu() * numMsgs * 2;
         if (setsockopt(soc, SOL_SOCKET, SO_RCVBUF,
                        (void *)&recvQueueSize, sizeof(recvQueueSize)) < 0) {
             return ZCM_EUNKNOWN;
@@ -263,7 +263,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     }
 
     static size_t _get_mtu(zcm_trans_t *zt)
-    { return cast(zt)->get_mtu(); }
+    { return cast(zt)->getMtu(); }
 
     static int _sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
     { return cast(zt)->sendmsg(msg); }

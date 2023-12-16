@@ -440,7 +440,15 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     int setQueueSize(unsigned numMsgs)
     {
-        return ZCM_EUNKNOWN;
+        // RRR (Bendes): Make a new thread to pull incoming serial data out of
+        // serial buffer into local message buffer. Unfortunately the kernel
+        // buffer is not resizeable
+        int recvQueueSize = getMtu() * numMsgs * 2;
+        if (setsockopt(soc, SOL_SOCKET, SO_RCVBUF,
+                       (void *)&recvQueueSize, sizeof(recvQueueSize)) < 0) {
+            return ZCM_EUNKNOWN;
+        }
+        return ZCM_EOK;
     }
 
     /********************** STATICS **********************/

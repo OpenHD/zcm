@@ -28,6 +28,8 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     condition_variable msgCond;
     mutex msgLock;
 
+    unsigned maxMsgQueueSize = 0;
+
     ZCM_TRANS_CLASSNAME(zcm_url_t *url, bool blocking)
     {
         trans_type = blocking ? ZCM_BLOCKING : ZCM_NONBLOCKING;
@@ -87,13 +89,13 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     int recvmsg_enable(const char *channel, bool enable) { return ZCM_EOK; }
 
-    int recvmsg(zcm_msg_t *msg, unsigned timeout)
+    int recvmsg(zcm_msg_t *msg, unsigned timeoutMs)
     {
         std::unique_lock<mutex> lk(msgLock, defer_lock);
 
         if (trans_type == ZCM_BLOCKING) {
             lk.lock();
-            bool available = msgCond.wait_for(lk, chrono::milliseconds(timeout),
+            bool available = msgCond.wait_for(lk, chrono::milliseconds(timeoutMs),
                                               [&](){ return !msgs.empty(); });
             if (!available) return ZCM_EAGAIN;
         } else {
@@ -119,7 +121,15 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     int setQueueSize(unsigned numMsgs)
     {
-        return ZCM_EUNKNOWN;
+        maxMsgQueueSize = numMsgs;
+        for (size_t i = numMsgs; i < msgs.size(); ++i) {
+            auto& msg = msgs[i];
+            free((void*)msg->channel);
+            delete[] msg->buf;
+            msgs.pop_back();
+        }
+        if (maxMsgQueueSize < msgs.size()) msgs.resize(maxMsgQueueSize);
+        return ZCM_EOK;
     }
 
     int update() { return ZCM_EOK; }
