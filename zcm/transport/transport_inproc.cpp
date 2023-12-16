@@ -28,8 +28,6 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     condition_variable msgCond;
     mutex msgLock;
 
-    unsigned maxMsgQueueSize = 0;
-
     ZCM_TRANS_CLASSNAME(zcm_url_t *url, bool blocking)
     {
         trans_type = blocking ? ZCM_BLOCKING : ZCM_NONBLOCKING;
@@ -121,14 +119,13 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     int setQueueSize(unsigned numMsgs)
     {
-        maxMsgQueueSize = numMsgs;
         for (size_t i = numMsgs; i < msgs.size(); ++i) {
             auto& msg = msgs[i];
             free((void*)msg->channel);
             delete[] msg->buf;
             msgs.pop_back();
         }
-        if (maxMsgQueueSize < msgs.size()) msgs.resize(maxMsgQueueSize);
+        if (numMsgs < msgs.size()) msgs.resize(numMsgs);
         return ZCM_EOK;
     }
 

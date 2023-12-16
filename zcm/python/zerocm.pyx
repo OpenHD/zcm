@@ -38,11 +38,13 @@ cdef extern from "zcm/zcm.h":
 
     int  zcm_publish(zcm_t* zcm, const char* channel, const uint8_t* data, uint32_t dlen)
 
-    void zcm_run               (zcm_t* zcm)
-    void zcm_start             (zcm_t* zcm)
-    void zcm_stop              (zcm_t* zcm)
-    int  zcm_handle            (zcm_t* zcm, unsigned timeout)
-    int  zcm_write_topology    (zcm_t* zcm, const char* name)
+    void zcm_run           (zcm_t* zcm)
+    void zcm_start         (zcm_t* zcm)
+    void zcm_stop          (zcm_t* zcm)
+    int  zcm_handle        (zcm_t* zcm, unsigned timeout)
+    int  zcm_flush         (zcm_t* zcm)
+    int  zcm_set_queue_size(zcm_t* zcm, unsigned num_messages)
+    int  zcm_write_topology(zcm_t* zcm, const char* name)
 
     ctypedef struct zcm_eventlog_t:
         pass
@@ -152,6 +154,10 @@ cdef class ZCM:
         if (timeout < 0):
             return ZCM_EINVALID
         return zcm_handle(self.zcm, timeout)
+    def flush(self):
+        return zcm_flush(self.zcm)
+    def setQueueSize(self, numMsgs):
+        return zcm_set_queue_size(self.zcm, numMsgs)
     def writeTopology(self, str name):
         return zcm_write_topology(self.zcm, name.encode('utf-8'))
 

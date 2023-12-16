@@ -58,7 +58,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     Type type;
 
     string subnet;
-    int pubhwm = 0, subhwm = 100;
+    int pubhwm = 100, subhwm = 100;
     uint64_t rescanPeriodUs = 250e3;
 
     unordered_map<string, pair<void*,lockfile_t*>> pubsocks;

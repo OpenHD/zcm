@@ -126,6 +126,11 @@ int zcm_publish(zcm_t* zcm, const char* channel, const uint8_t* data, uint32_t l
  * timeout is in units of milliseconds */
 int zcm_handle(zcm_t* zcm, unsigned timeout);
 
+/* Block until all messages have been sent even if the underlying transport is
+ * nonblocking. Additionally, dispatches messages continuously until it has no
+ * more to dispatch already been received sequentially in this thread. */
+int zcm_flush(zcm_t* zcm);
+
 /* Request that the underlying transport queue at least this many messages.
  * Messages will accumulate unless:
  *  - zcm_handle() is called repeatedly

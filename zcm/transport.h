@@ -174,13 +174,16 @@
  *      int update(zcm_trans_t* zt)
  *      --------------------------------------------------------------------
  *         This method is called from the zcm_handle() function.
- *         This method provides a periodicly-running routine that can perform
+ *         This method provides a periodically-running routine that can perform
  *         updates to the underlying hardware or other general mantainence to
  *         this transport. This method should *never block*. Again, this
  *         method is called from zcm_handle() and thus runs at the same
  *         frequency as zcm_handle(). Failure to call zcm_handle()
  *         while using an nonblock transport may cause the transport to work
  *         incorrectly on both message send and recv.
+ *         Returns ZCM_EOK if transport has no data awaiting transfer,
+ *         ZCM_EAGAIN if data is awaiting transfer, and any other error where
+ *         appropriate
  *
  *      void destroy(zcm_trans_t* zt)
  *      --------------------------------------------------------------------

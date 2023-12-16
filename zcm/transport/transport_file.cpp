@@ -164,6 +164,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     int setQueueSize(unsigned numMsgs)
     {
+        // RRR (Bendes): Should we limit the max?
         return ZCM_EUNKNOWN;
     }
 

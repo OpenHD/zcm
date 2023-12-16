@@ -95,8 +95,6 @@ class DispatchLoopTest : public CxxTest::TestSuite
         zcm_t *zcm = zcm_create("ipc");
         TS_ASSERT(zcm);
 
-        zcm_start(zcm);
-
         running = true;
         std::thread kill {killThread};
         std::thread ctrl {controlThread, zcm};

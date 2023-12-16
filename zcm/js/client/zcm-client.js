@@ -75,11 +75,30 @@ var zcm = (function(){
             if (successCb) successCb(false);
         }
 
+        /**
+         * Forces all incoming and outgoing messages to be flushed to their
+         * handlers / to the transport.
+         * @params {doneCb} doneCb - callback for successful flush
+         */
+        function flush(doneCb) {
+            socket.emit("flush", doneCb);
+        }
+
+
+        /**
+         * Sets the recv and send queue sizes within zcm
+         */
+        function setQueueSize(sz, cb)
+        {
+            socket.emit('setQueueSize', sz, cb);
+        }
 
         return {
             publish:        publish,
             subscribe:      subscribe,
             unsubscribe:    unsubscribe,
+            flush:          flush,
+            setQueueSize:   setQueueSize,
             getZcmtypes:    getZcmtypes,
         };
     }

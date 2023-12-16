@@ -399,6 +399,9 @@ struct Bridge
 
         zcmA->stop();
         zcmB->stop();
+
+        zcmA->flush();
+        zcmB->flush();
     }
 };
 

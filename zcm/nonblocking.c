@@ -217,6 +217,33 @@ int zcm_nonblocking_handle(zcm_nonblocking_t* zcm)
     return ZCM_EOK;
 }
 
+int zcm_nonblocking_flush(zcm_nonblocking_t* zcm)
+{
+    int ret;
+    do {
+        ret = ZCM_EOK;
+
+        /* Call twice because we need to make sure publish and subscribe are both handled */
+        if (zcm_trans_update(zcm->zt) == ZCM_EAGAIN) ret = ZCM_EAGAIN;
+
+        zcm_msg_t msg;
+        int recvret;
+        do {
+            recvret = zcm_trans_recvmsg(zcm->zt, &msg, 0);
+            if (recvret == ZCM_EOK) {
+                ret = ZCM_EAGAIN;
+                dispatch_message(zcm, &msg);
+            } else if (ret != ZCM_EAGAIN) {
+                ret = recvret;
+                break;
+            }
+        } while (recvret == ZCM_EOK);
+
+    } while(ret == ZCM_EAGAIN);
+
+    return ret;
+}
+
 int zcm_nonblocking_set_queue_size(zcm_nonblocking_t* zcm, unsigned num_messages)
 {
     return zcm_trans_set_queue_size(zcm->zt, num_messages);

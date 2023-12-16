@@ -13,9 +13,11 @@ export Zcm,
        subscribe,
        unsubscribe,
        publish,
+       flush,
        start,
        stop,
        handle,
+       set_queue_size,
        write_topology,
        read_bits,
        write_bits,
@@ -26,7 +28,8 @@ export Zcm,
        read_event_at_offset,
        write_event
 
-import Base: fieldnames,
+import Base: flush,
+             fieldnames,
              unsafe_convert
 
 @static if VERSION < v"0.7.0-"
@@ -246,6 +249,11 @@ function publish(zcm::Zcm, channel::AbstractString, msg::AbstractZcmType)
     publish(zcm, channel, encode(msg))
 end
 
+
+function flush(zcm::Zcm)
+    ccall(("zcm_flush", "libzcm"), Cint, (Ptr{Native.Zcm},), zcm)
+end
+
 function start(zcm::Zcm)
     @warn "Threaded interface was partially broken by Julia 1.6 : you cannot put printouts in handlers"
     ccall(("zcm_start", "libzcm"), Nothing, (Ptr{Native.Zcm},), zcm)
@@ -256,7 +264,24 @@ function stop(zcm::Zcm)
 end
 
 function handle(zcm::Zcm, timeout:Integer)
-    ccall(("zcm_handle", "libzcm"), Cint, (Cint,), Cint(err))
+    ccall(("zcm_handle", "libzcm"), Cint, (Ptr{Native.Zcm},Cint,), zcm, timeout)
+end
+
+function flush(zcm::Zcm)
+    ccall(("zcm_handle", "libzcm"), Cint, (Ptr{Native.Zcm},), zcm)
+end
+
+function set_queue_size(zcm::Zcm, num::Integer)
+    sz = UInt32(num)
+    while (true)
+        ret = ccall(("zcm_try_set_queue_size", "libzcm"), Cint,
+                    (Ptr{Native.Zcm}, UInt32), zcm, sz)
+        if (ret == Cint(0))
+            break
+        else
+            yield()
+        end
+    end
 end
 
 function write_topology(zcm::Zcm, name::AbstractString)

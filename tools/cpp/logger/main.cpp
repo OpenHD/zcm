@@ -39,9 +39,10 @@ struct Args
     {
         string zcmurl = "";
         vector<string> channels;
+        int queue_size = 0;
 
-        Shard(const string& zcmurl) :
-            zcmurl(zcmurl)
+        Shard(const string& zcmurl, int queue_size) :
+            zcmurl(zcmurl), queue_size(queue_size)
         {}
     };
 
@@ -63,11 +64,12 @@ struct Args
     bool parse(int argc, char *argv[])
     {
         // set some defaults
-        const char *optstring = "hu:c:b:fir:s:ql:m:p:n:d";
+        const char *optstring = "hu:c:z:b:fir:s:ql:m:p:n:d";
         struct option long_opts[] = {
             { "help",              no_argument,       0, 'h' },
             { "zcm-url",           required_argument, 0, 'u' },
             { "channel",           required_argument, 0, 'c' },
+            { "queue-size",        required_argument, 0, 'z' },
             { "split-mb",          required_argument, 0, 'b' },
             { "force",             no_argument,       0, 'f' },
             { "increment",         no_argument,       0, 'i' },
@@ -112,11 +114,19 @@ struct Args
         while ((c = getopt_long (argc, argv, optstring, long_opts, 0)) >= 0) {
             switch (c) {
                 case 'u':
-                    shards.emplace_back(optarg);
+                    shards.emplace_back(optarg, 0);
                     break;
                 case 'c':
-                    if (shards.empty()) shards.emplace_back("");
+                    if (shards.empty()) shards.emplace_back("", 0);
                     shards.back().channels.push_back(optarg);
+                    break;
+                case 'z':
+                    if (shards.empty()) shards.emplace_back("", 0);
+                    shards.back().queue_size = atoi(optarg);
+                    if (shards.back().queue_size == 0) {
+                        cerr << "Please specify a valid queue size greater than 0" << endl;
+                        return false;
+                    }
                     break;
                 case 'b':
                     auto_split_mb = strtod(optarg, NULL);
@@ -184,7 +194,7 @@ struct Args
             return false;
         }
 
-        if (shards.empty()) shards.emplace_back("");
+        if (shards.empty()) shards.emplace_back("", 0);
         for (auto& s : shards) {
             if (s.channels.empty()) {
                 s.channels.push_back(".*");
@@ -658,6 +668,11 @@ int main(int argc, char *argv[])
             return 1;
         }
 
+        if (s.queue_size > 0) {
+            ZCM_DEBUG("Setting shard queue size to: %d", s.queue_size);
+            zcms.back()->setQueueSize(s.queue_size);
+        }
+
         for (const auto& c : s.channels) {
             ZCM_DEBUG("Subscribing to : %s", c.c_str());
             zcms.back()->subscribe(c, &handler, (void*)i);
@@ -675,7 +690,10 @@ int main(int argc, char *argv[])
     while (!done) logger.flushWhenReady();
 
     ZCM_DEBUG("Stopping zcms");
-    for (auto& z : zcms) z->stop();
+    for (auto& z : zcms) {
+        z->stop();
+        z->flush();
+    }
 
     cerr << "Logger exiting" << endl;
 

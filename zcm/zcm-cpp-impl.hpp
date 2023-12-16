@@ -116,12 +116,20 @@ inline void ZCM::stop()
 }
 #endif
 
-#ifndef ZCM_EMBEDDED
-inline int ZCM::handle(int timeout)
+inline int ZCM::handle(unsigned timeout)
 {
     return zcm_handle(zcm, timeout);
 }
-#endif
+
+inline int ZCM::flush()
+{
+    return zcm_flush(zcm);
+}
+
+inline int ZCM::setQueueSize(uint32_t sz)
+{
+    return zcm_set_queue_size(zcm, sz);
+}
 
 #ifndef ZCM_EMBEDDED
 inline int ZCM::writeTopology(const std::string& name)

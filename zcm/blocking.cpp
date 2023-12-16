@@ -68,6 +68,7 @@ struct zcm_blocking
     void start();
     void stop();
     int handle(unsigned timeout);
+    int flush();
     int setQueueSize(unsigned numMsgs);
 
     int publish(const char* channel, const uint8_t* data, uint32_t len);
@@ -161,7 +162,6 @@ void zcm_blocking_t::run()
     recvMode = RECV_MODE_NONE;
 }
 
-// TODO: should this call be thread safe?
 void zcm_blocking_t::start()
 {
     if (recvMode != RECV_MODE_NONE) {
@@ -301,6 +301,18 @@ int zcm_blocking_t::unsubscribe(zcm_sub_t* sub, bool block)
     return ZCM_EOK;
 }
 
+int zcm_blocking_t::flush()
+{
+    int ret;
+    do {
+        ret = dispatchOneMsg(0);
+        if (ret == ZCM_EAGAIN) ret = ZCM_EOK;
+        else if (ret == ZCM_EOK) ret = ZCM_EAGAIN;
+    } while(ret == ZCM_EAGAIN);
+
+    return ret;
+}
+
 void zcm_blocking_t::recvThreadFunc()
 {
     SET_THREAD_NAME("ZeroCM_receiver");
@@ -437,6 +449,11 @@ int zcm_blocking_unsubscribe(zcm_blocking_t* zcm, zcm_sub_t* sub)
     return zcm->unsubscribe(sub, true);
 }
 
+int zcm_blocking_flush(zcm_blocking_t* zcm)
+{
+    return zcm->flush();
+}
+
 void zcm_blocking_run(zcm_blocking_t* zcm)
 {
     return zcm->run();
@@ -449,7 +466,7 @@ void zcm_blocking_start(zcm_blocking_t* zcm)
 
 void zcm_blocking_stop(zcm_blocking_t* zcm)
 {
-    zcm->stop();
+    return zcm->stop();
 }
 
 int zcm_blocking_handle(zcm_blocking_t* zcm, unsigned timeout)

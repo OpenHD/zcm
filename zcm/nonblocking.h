@@ -25,6 +25,8 @@ int zcm_nonblocking_unsubscribe(zcm_nonblocking_t* zcm, zcm_sub_t* sub);
 /* Returns 1 if a message was dispatched, and 0 otherwise */
 int zcm_nonblocking_handle(zcm_nonblocking_t* zcm);
 
+int zcm_nonblocking_flush(zcm_nonblocking_t* zcm);
+
 int zcm_nonblocking_set_queue_size(zcm_nonblocking_t* zcm, unsigned num_messages);
 
 #ifndef ZCM_EMBEDDED

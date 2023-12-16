@@ -234,7 +234,7 @@ int serial_update_rx(zcm_trans_t *_zt)
 {
     zcm_trans_generic_serial_t* zt = cast(_zt);
     cb_flush_in(&zt->recvBuffer, zt->get, zt->put_get_usr);
-    return ZCM_EOK;
+    return cb_room(&zt->recvBuffer) == 0 ? ZCM_EOK : ZCM_EAGAIN;
 }
 
 int serial_update_tx(zcm_trans_t *_zt)

@@ -390,6 +390,7 @@ int UDP::recvmsg(zcm_msg_t *msg, unsigned timeoutMs)
 
 int UDP::setQueueSize(unsigned numMsgs)
 {
+    // RRR (Bendes): Implement
     return ZCM_EUNKNOWN;
 }
 

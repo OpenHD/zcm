@@ -41,7 +41,9 @@ var libzcm = new ffi.Library('libzcm', {
     'zcm_try_subscribe':        ['pointer', ['pointer', 'string', 'pointer', 'pointer']],
     'zcm_try_unsubscribe':      ['int',     ['pointer', 'pointer']],
     'zcm_start':                ['void',    ['pointer']],
-    'zcm_stop':                 ['void',     ['pointer']],
+    'zcm_stop':                 ['void',    ['pointer']],
+    'zcm_flush':                ['int',     ['pointer']],
+    'zcm_set_queue_size':       ['int',     ['pointer', 'int']],
     'zcm_write_topology':       ['int',     ['pointer', 'string']],
 });
 
@@ -229,6 +231,15 @@ function zcm(zcmtypes, zcmurl)
     }
 
     /**
+     * Forces all incoming and outgoing messages to be flushed to their handlers / to the transport.
+     * @params {doneCb} doneCb - callback for successful flush
+     */
+    zcm.prototype.flush = function()
+    {
+        return libzcm.zcm_flush(parent.z);
+    }
+
+    /**
      * Starts the zcm internal threads. Called by default on creation
      */
     zcm.prototype.start = function()
@@ -242,6 +253,14 @@ function zcm(zcmtypes, zcmurl)
     zcm.prototype.stop = function()
     {
         libzcm.zcm_stop(parent.z);
+    }
+
+    /**
+     * Sets the recv and send queue sizes within zcm
+     */
+    zcm.prototype.setQueueSize = function(sz)
+    {
+        return libzcm.zcm_set_queue_size(parent.z, sz);
     }
 
     /**
@@ -296,6 +315,12 @@ function zcm_create(zcmtypes, zcmurl, http, socketIoOptions = {})
                                     delete subscriptions[subId];
                                     if (successCb) successCb();
                                 });
+            });
+            socket.on('flush', function () {
+                z.flush();
+            });
+            socket.on('setQueueSize', function (sz) {
+                z.setQueueSize(sz);
             });
             socket.on('disconnect', function () {
                 for (var subId in subscriptions) {
