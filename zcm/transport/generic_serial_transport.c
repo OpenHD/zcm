@@ -226,6 +226,7 @@ int serial_recvmsg(zcm_trans_generic_serial_t *zt, zcm_msg_t *msg, unsigned time
 
 int serial_set_queue_size(zcm_trans_generic_serial_t *zt, unsigned num_messages)
 {
+    /* This is unsupported as this class doesn't allocate dynamic memory after init */
     return ZCM_EUNKNOWN;
 }
 
@@ -240,7 +241,7 @@ int serial_update_tx(zcm_trans_t *_zt)
 {
     zcm_trans_generic_serial_t* zt = cast(_zt);
     cb_flush_out(&zt->sendBuffer, zt->put, zt->put_get_usr);
-    return ZCM_EOK;
+    return cb_size(&zt->sendBuffer) == 0 ? ZCM_EOK : ZCM_EAGAIN;
 }
 
 /********************** STATICS **********************/
@@ -264,9 +265,7 @@ static int _serial_update(zcm_trans_t *zt)
 }
 
 static int _serial_set_queue_size(zcm_trans_t *zt, unsigned num_messages)
-{
-    return serial_set_queue_size(cast(zt), num_messages);
-}
+{ return serial_set_queue_size(cast(zt), num_messages); }
 
 static zcm_trans_methods_t methods = {
     &_serial_get_mtu,

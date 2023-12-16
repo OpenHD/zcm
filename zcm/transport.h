@@ -63,6 +63,8 @@
  *         this method can return ZCM_EINVALID. On receipt of valid params,
  *         this method should block until the message has been successfully
  *         sent and should return ZCM_EOK.
+ *         NOTE: This method should work concurrently and correctly with
+ *         recvmsg() and recvmsg_enable()
  *
  *      int recvmsg_enable(zcm_trans_t* zt, const char* channel, bool enable)
  *      --------------------------------------------------------------------
@@ -137,6 +139,8 @@
  *         this method should *never block*. If the transport cannot accept the
  *         message due to unavailability, ZCM_EAGAIN should be returned.
  *         On success ZCM_EOK should be returned.
+ *         NOTE: This method should work concurrently and correctly with
+ *         recvmsg() and recvmsg_enable()
  *
  *      int recvmsg_enable(zcm_trans_t* zt, const char* channel, bool enable)
  *      --------------------------------------------------------------------

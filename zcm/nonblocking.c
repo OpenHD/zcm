@@ -19,6 +19,7 @@ struct zcm_nonblocking
     bool      subInUse[ZCM_NONBLOCK_SUBS_MAX];
     bool      subIsRegex[ZCM_NONBLOCK_SUBS_MAX];
     size_t    subInUseEnd;
+    size_t    mtu;
 };
 
 static bool isRegexChannel(const char* c, size_t clen)
@@ -67,6 +68,9 @@ int zcm_nonblocking_try_create(zcm_nonblocking_t** zcm, zcm_t* z, zcm_trans_t* z
         (*zcm)->subInUse[i] = false;
 
     (*zcm)->subInUseEnd = 0;
+
+    (*zcm)->mtu = zcm_trans_get_mtu(zt);
+
     return ZCM_EOK;
 }
 
@@ -82,12 +86,16 @@ void zcm_nonblocking_destroy(zcm_nonblocking_t* zcm)
 int zcm_nonblocking_publish(zcm_nonblocking_t* z, const char* channel,
                             const uint8_t* data, uint32_t len)
 {
-    zcm_msg_t msg;
+    /* Check the validity of the request */
+    if (len > z->mtu) return ZCM_EINVALID;
 
-    msg.channel = channel;
-    msg.len = len;
-    /* Casting away constness okay because msg isn't used past end of function */
-    msg.buf = (uint8_t*) data;
+    zcm_msg_t msg = {
+        .utime = 0,
+        .channel = channel,
+        .len = len,
+        /* Casting away constness okay because msg isn't used past end of function */
+        .buf = (uint8_t*) data,
+    };
     return zcm_trans_sendmsg(z->zt, msg);
 }
 
