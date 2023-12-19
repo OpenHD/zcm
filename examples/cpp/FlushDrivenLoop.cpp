@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
     usleep(1e6);
 
     zcm.setQueueSize(numInBlock * 4);
+    zcm.pause();
 
     auto publishBlock = [&](){
         for (size_t i = 0; i < numInBlock / 2; ++i) {

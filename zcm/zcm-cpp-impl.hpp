@@ -116,6 +116,20 @@ inline void ZCM::stop()
 }
 #endif
 
+#ifndef ZCM_EMBEDDED
+inline void ZCM::pause()
+{
+    zcm_pause(zcm);
+}
+#endif
+
+#ifndef ZCM_EMBEDDED
+inline void ZCM::resume()
+{
+    zcm_resume(zcm);
+}
+#endif
+
 inline int ZCM::handle(unsigned timeout)
 {
     return zcm_handle(zcm, timeout);

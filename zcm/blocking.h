@@ -26,6 +26,8 @@ int zcm_blocking_flush(zcm_blocking_t* zcm);
 void zcm_blocking_run(zcm_blocking_t* zcm);
 void zcm_blocking_start(zcm_blocking_t* zcm);
 void zcm_blocking_stop(zcm_blocking_t* zcm);
+void zcm_blocking_pause(zcm_blocking_t* zcm);
+void zcm_blocking_resume(zcm_blocking_t* zcm);
 int  zcm_blocking_handle(zcm_blocking_t* zcm, unsigned timeout);
 int  zcm_blocking_set_queue_size(zcm_blocking_t* zcm, unsigned num_messages);
 

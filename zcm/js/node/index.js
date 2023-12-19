@@ -43,6 +43,8 @@ var libzcm = new ffi.Library('libzcm', {
     'zcm_start':                ['void',    ['pointer']],
     'zcm_stop':                 ['void',    ['pointer']],
     'zcm_flush':                ['int',     ['pointer']],
+    'zcm_pause':                ['void',    ['pointer']],
+    'zcm_resume':               ['void',    ['pointer']],
     'zcm_set_queue_size':       ['int',     ['pointer', 'int']],
     'zcm_write_topology':       ['int',     ['pointer', 'string']],
 });
@@ -256,6 +258,22 @@ function zcm(zcmtypes, zcmurl)
     }
 
     /**
+     * Pauses transport publishing and message dispatch
+     */
+    zcm.prototype.pause = function()
+    {
+        libzcm.zcm_pause(parent.z);
+    }
+
+    /**
+     * Resumes transport publishing and message dispatch
+     */
+    zcm.prototype.resume = function()
+    {
+        libzcm.zcm_resume(parent.z);
+    }
+
+    /**
      * Sets the recv and send queue sizes within zcm
      */
     zcm.prototype.setQueueSize = function(sz)
@@ -289,8 +307,9 @@ function zcm_create(zcmtypes, zcmurl, http, socketIoOptions = {})
         io.on('connection', function (socket) {
             var subscriptions = {};
             var nextSub = 0;
-            socket.on('client-to-server', function (data) {
-                z.publish(data.channel, data.msg);
+            socket.on('client-to-server', function (data, cb) {
+                const ret = z.publish(data.channel, data.msg);
+                if (cb) cb(ret)
             });
             socket.on('subscribe', function (data, returnSubscription) {
                 var subId = nextSub++;
@@ -316,11 +335,21 @@ function zcm_create(zcmtypes, zcmurl, http, socketIoOptions = {})
                                     if (successCb) successCb();
                                 });
             });
-            socket.on('flush', function () {
+            socket.on('flush', function (cb) {
                 z.flush();
+                if (cb) cb();
             });
-            socket.on('setQueueSize', function (sz) {
+            socket.on('pause', function (cb) {
+                ret.pause();
+                if (cb) cb();
+            });
+            socket.on('resume', function (cb) {
+                ret.resume();
+                if (cb) cb();
+            });
+            socket.on('setQueueSize', function (sz, cb) {
                 z.setQueueSize(sz);
+                if (cb) cb();
             });
             socket.on('disconnect', function () {
                 for (var subId in subscriptions) {

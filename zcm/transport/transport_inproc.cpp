@@ -50,7 +50,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     bool good() { return true; }
 
     /********************** METHODS **********************/
-    size_t get_mtu() { return MTU; }
+    size_t getMtu() { return MTU; }
 
     int sendmsg(zcm_msg_t msg)
     {
@@ -139,8 +139,8 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return (ZCM_TRANS_CLASSNAME*)zt;
     }
 
-    static size_t _get_mtu(zcm_trans_t *zt)
-    { return cast(zt)->get_mtu(); }
+    static size_t _getMtu(zcm_trans_t *zt)
+    { return cast(zt)->getMtu(); }
 
     static int _sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
     { return cast(zt)->sendmsg(msg); }
@@ -165,7 +165,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 };
 
 zcm_trans_methods_t ZCM_TRANS_CLASSNAME::methods = {
-    &ZCM_TRANS_CLASSNAME::_get_mtu,
+    &ZCM_TRANS_CLASSNAME::_getMtu,
     &ZCM_TRANS_CLASSNAME::_sendmsg,
     &ZCM_TRANS_CLASSNAME::_recvmsgEnable,
     &ZCM_TRANS_CLASSNAME::_recvmsg,

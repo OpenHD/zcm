@@ -144,6 +144,8 @@ void zcm_run(zcm_t* zcm);
 void zcm_start(zcm_t* zcm);
 // This function may be called if zcm_run() is currently running in another thread
 void zcm_stop(zcm_t* zcm);
+void zcm_pause(zcm_t* zcm); /* pauses all interaction with transport */
+void zcm_resume(zcm_t* zcm);
 
 /* Write topology file to filename. Returns ZCM_EOK normally, error code on failure */
 int zcm_write_topology(zcm_t* zcm, const char* name);

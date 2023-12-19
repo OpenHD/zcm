@@ -41,6 +41,8 @@ cdef extern from "zcm/zcm.h":
     void zcm_run           (zcm_t* zcm)
     void zcm_start         (zcm_t* zcm)
     void zcm_stop          (zcm_t* zcm)
+    void zcm_pause             (zcm_t* zcm)
+    void zcm_resume            (zcm_t* zcm)
     int  zcm_handle        (zcm_t* zcm, unsigned timeout)
     int  zcm_flush         (zcm_t* zcm)
     int  zcm_set_queue_size(zcm_t* zcm, unsigned num_messages)
@@ -150,6 +152,10 @@ cdef class ZCM:
         zcm_start(self.zcm)
     def stop(self):
         zcm_stop(self.zcm)
+    def pause(self):
+        zcm_pause(self.zcm)
+    def resume(self):
+        zcm_resume(self.zcm)
     def handle(self, timeout):
         if (timeout < 0):
             return ZCM_EINVALID

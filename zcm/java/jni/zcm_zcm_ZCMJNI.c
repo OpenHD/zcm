@@ -217,4 +217,6 @@ JNIEXPORT jint JNICALL Java_zcm_zcm_ZCMJNI_handle
     return zcm_handle(I->zcm, timeoutJ);
 }
 
-PASS_THROUGH_FUNC(flush, flush, jint, ()V)
+PASS_THROUGH_FUNC(pause, pause, void, ()V)
+PASS_THROUGH_FUNC(resume, resume, void, ()V)
+PASS_THROUGH_FUNC(flush, flush, jint, ()I)

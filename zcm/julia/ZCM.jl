@@ -249,6 +249,13 @@ function publish(zcm::Zcm, channel::AbstractString, msg::AbstractZcmType)
     publish(zcm, channel, encode(msg))
 end
 
+function pause(zcm::Zcm)
+    ccall(("zcm_pause", "libzcm"), Nothing, (Ptr{Native.Zcm},), zcm)
+end
+
+function resume(zcm::Zcm)
+    ccall(("zcm_resume", "libzcm"), Nothing, (Ptr{Native.Zcm},), zcm)
+end
 
 function flush(zcm::Zcm)
     ccall(("zcm_flush", "libzcm"), Cint, (Ptr{Native.Zcm},), zcm)
@@ -265,10 +272,6 @@ end
 
 function handle(zcm::Zcm, timeout:Integer)
     ccall(("zcm_handle", "libzcm"), Cint, (Ptr{Native.Zcm},Cint,), zcm, timeout)
-end
-
-function flush(zcm::Zcm)
-    ccall(("zcm_handle", "libzcm"), Cint, (Ptr{Native.Zcm},), zcm)
 end
 
 function set_queue_size(zcm::Zcm, num::Integer)

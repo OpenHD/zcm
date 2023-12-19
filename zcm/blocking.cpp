@@ -67,6 +67,8 @@ struct zcm_blocking
     void run();
     void start();
     void stop();
+    void pause();
+    void resume();
     int handle(unsigned timeout);
     int flush();
     int setQueueSize(unsigned numMsgs);
@@ -181,6 +183,18 @@ void zcm_blocking_t::stop()
         recvMode = RECV_MODE_NONE;
     }
     while (handle(0) == ZCM_EOK);
+}
+
+void zcm_blocking_t::pause()
+{
+    // RRR (Bendes): Implement
+    assert(false);
+}
+
+void zcm_blocking_t::resume()
+{
+    // RRR (Bendes): Implement
+    assert(false);
 }
 
 int zcm_blocking_t::handle(unsigned timeoutMs)
@@ -303,6 +317,7 @@ int zcm_blocking_t::unsubscribe(zcm_sub_t* sub, bool block)
 
 int zcm_blocking_t::flush()
 {
+    // RRR (Bendes): Handle thread safety
     int ret;
     do {
         ret = dispatchOneMsg(0);
@@ -462,6 +477,16 @@ void zcm_blocking_run(zcm_blocking_t* zcm)
 void zcm_blocking_start(zcm_blocking_t* zcm)
 {
     return zcm->start();
+}
+
+void zcm_blocking_pause(zcm_blocking_t* zcm)
+{
+    return zcm->pause();
+}
+
+void zcm_blocking_resume(zcm_blocking_t* zcm)
+{
+    return zcm->resume();
 }
 
 void zcm_blocking_stop(zcm_blocking_t* zcm)

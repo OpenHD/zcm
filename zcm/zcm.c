@@ -316,6 +316,22 @@ void zcm_run(zcm_t* zcm)
 #endif
 
 #ifndef ZCM_EMBEDDED
+void zcm_pause(zcm_t* zcm)
+{
+    ZCM_ASSERT(zcm->type == ZCM_BLOCKING);
+    return zcm_blocking_pause(zcm->impl);
+}
+#endif
+
+#ifndef ZCM_EMBEDDED
+void zcm_resume(zcm_t* zcm)
+{
+    ZCM_ASSERT(zcm->type == ZCM_BLOCKING);
+    return zcm_blocking_resume(zcm->impl);
+}
+#endif
+
+#ifndef ZCM_EMBEDDED
 int zcm_write_topology(zcm_t* zcm, const char* name)
 {
     switch (zcm->type) {

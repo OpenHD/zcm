@@ -71,6 +71,21 @@ JNIEXPORT jint JNICALL Java_zcm_zcm_ZCMJNI_unsubscribe
 JNIEXPORT jint JNICALL Java_zcm_zcm_ZCMJNI_flush
   (JNIEnv *, jobject);
 
+/*
+ * Class:     zcm_zcm_ZCMJNI
+ * Method:    pause
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_zcm_zcm_ZCMJNI_pause
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     zcm_zcm_ZCMJNI
+ * Method:    resume
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_zcm_zcm_ZCMJNI_resume
+  (JNIEnv *, jobject);
 
 /*
  * Class:     zcm_zcm_ZCMJNI
