@@ -20,6 +20,7 @@
 #include <mutex>
 #include <regex>
 #include <atomic>
+#include <condition_variable>
 using namespace std;
 
 #define RECV_TIMEOUT 100
@@ -81,11 +82,10 @@ struct zcm_blocking
 
   private:
     void recvThreadFunc();
-
     bool startRecvThread();
 
     void dispatchMsg(const zcm_msg_t& msg);
-    int dispatchOneMsg(unsigned timeout);
+    int recvOneMessage(unsigned timeout);
 
     bool deleteSubEntry(zcm_sub_t* sub, size_t nentriesleft);
     bool deleteFromSubList(SubList& slist, zcm_sub_t* sub);
@@ -105,21 +105,12 @@ struct zcm_blocking
     mutex subDispMutex;
     mutex subRecvMutex;
 
-    typedef enum {
-        RECV_MODE_NONE = 0,
-        RECV_MODE_RUN,
-        RECV_MODE_SPAWN,
-    } RecvMode_t;
-    RecvMode_t recvMode {RECV_MODE_NONE};
     thread recvThread;
-    atomic_bool done { false };
 
-    typedef enum {
-        THREAD_STATE_STOPPED = 0,
-        THREAD_STATE_RUNNING,
-        THREAD_STATE_HALTING,
-        THREAD_STATE_HALTED,
-    } ThreadState_t;
+    enum class RunState {NONE, RUNNING, PAUSE, PAUSED, STOP};
+    atomic<RunState> runState {RunState::NONE};
+    condition_variable pauseCond;
+    mutex pauseCondLk;
 };
 
 zcm_blocking_t::zcm_blocking(zcm_t* z_, zcm_trans_t* zt_)
@@ -133,7 +124,7 @@ zcm_blocking_t::zcm_blocking(zcm_t* z_, zcm_trans_t* zt_)
 zcm_blocking_t::~zcm_blocking()
 {
     // Shutdown all threads
-    if (recvMode == RECV_MODE_SPAWN) stop();
+    if (runState != RunState::NONE) stop();
 
     // Destroy the transport
     zcm_trans_destroy(zt);
@@ -154,61 +145,63 @@ zcm_blocking_t::~zcm_blocking()
 
 void zcm_blocking_t::run()
 {
-    if (recvMode != RECV_MODE_NONE) {
-        ZCM_DEBUG("Err: call to run() when 'recvMode != RECV_MODE_NONE'");
+    if (runState != RunState::NONE) {
+        ZCM_DEBUG("Err: call to run() when 'runState != RunState::NONE'");
         return;
     }
-    recvMode = RECV_MODE_RUN;
 
     recvThreadFunc();
-    recvMode = RECV_MODE_NONE;
 }
 
 void zcm_blocking_t::start()
 {
-    if (recvMode != RECV_MODE_NONE) {
-        ZCM_DEBUG("Err: call to start() when 'recvMode != RECV_MODE_NONE'");
+    if (runState != RunState::NONE) {
+        ZCM_DEBUG("Err: call to start() when 'runState != RunState::NONE'");
         return;
     }
-    recvMode = RECV_MODE_SPAWN;
+    runState = RunState::RUNNING;
 
     recvThread = thread{&zcm_blocking::recvThreadFunc, this};
 }
 
 void zcm_blocking_t::stop()
 {
-    done = true;
-    if (recvMode == RECV_MODE_SPAWN) {
+    if (runState == RunState::RUNNING || runState == RunState::PAUSED) {
+        runState = RunState::STOP;
+        pauseCond.notify_all();
         recvThread.join();
-        recvMode = RECV_MODE_NONE;
+        runState = RunState::NONE;
     }
+    // Should we be flushing here?
     while (handle(0) == ZCM_EOK);
 }
 
 void zcm_blocking_t::pause()
 {
-    // RRR (Bendes): Implement
-    assert(false);
+    if (runState != RunState::RUNNING) return;
+    runState = RunState::PAUSE;
+    pauseCond.notify_all();
+    unique_lock<mutex> lk(pauseCondLk);
+    pauseCond.wait(lk, [this](){ return runState == RunState::PAUSED; });
 }
 
 void zcm_blocking_t::resume()
 {
-    // RRR (Bendes): Implement
-    assert(false);
+    if (runState != RunState::PAUSED) return;
+    runState = RunState::RUNNING;
+    pauseCond.notify_all();
 }
 
 int zcm_blocking_t::handle(unsigned timeoutMs)
 {
-    if (recvMode != RECV_MODE_NONE) return ZCM_EINVALID;
-    return dispatchOneMsg(timeoutMs);
+    if (runState != RunState::NONE && runState != RunState::PAUSED) return ZCM_EINVALID;
+    return recvOneMessage(timeoutMs);
 }
 
 int zcm_blocking_t::setQueueSize(unsigned numMsgs)
 {
-    // RRR (Bendes): Need to decide how we handle locking here.
-    //               Maybe we just say that the thread.
-    //               This seems a bit restrictive
-    if (recvMode != RECV_MODE_NONE) return ZCM_EINVALID;
+    // RRR (Bendes): When is the transport okay with the user calling this?
+    if (runState != RunState::NONE && runState != RunState::PAUSED) return ZCM_EINVALID;
     return zcm_trans_set_queue_size(zt, numMsgs);
 }
 
@@ -317,10 +310,14 @@ int zcm_blocking_t::unsubscribe(zcm_sub_t* sub, bool block)
 
 int zcm_blocking_t::flush()
 {
-    // RRR (Bendes): Handle thread safety
+    if (runState != RunState::NONE && runState != RunState::PAUSED) {
+        ZCM_DEBUG("Err: must be paused or stopped in order to flush");
+        return ZCM_EINVALID;
+    }
+
     int ret;
     do {
-        ret = dispatchOneMsg(0);
+        ret = recvOneMessage(0);
         if (ret == ZCM_EAGAIN) ret = ZCM_EOK;
         else if (ret == ZCM_EOK) ret = ZCM_EAGAIN;
     } while(ret == ZCM_EAGAIN);
@@ -331,14 +328,30 @@ int zcm_blocking_t::flush()
 void zcm_blocking_t::recvThreadFunc()
 {
     SET_THREAD_NAME("ZeroCM_receiver");
-    while (!done) dispatchOneMsg(RECV_TIMEOUT);
+
+    while (true) {
+
+        if (runState == RunState::PAUSE) {
+            runState = RunState::PAUSED;
+            pauseCond.notify_all();
+
+            unique_lock<mutex> lk(pauseCondLk);
+            pauseCond.wait(lk, [this](){ return runState != RunState::PAUSED; });
+        }
+
+        if (runState == RunState::STOP) break;
+
+        recvOneMessage(RECV_TIMEOUT);
+    }
+
+    runState = RunState::NONE;
 }
 
-int zcm_blocking_t::dispatchOneMsg(unsigned timeout)
+int zcm_blocking_t::recvOneMessage(unsigned timeout)
 {
     zcm_msg_t msg;
     int rc = zcm_trans_recvmsg(zt, &msg, timeout);
-    if (done) return ZCM_EINTR;
+    if (runState == RunState::STOP) return ZCM_EINTR;
     if (rc != ZCM_EOK) return rc;
     dispatchMsg(msg);
     return ZCM_EOK;
@@ -426,7 +439,7 @@ bool zcm_blocking_t::deleteFromSubList(SubList& slist, zcm_sub_t* sub)
 
 int zcm_blocking_t::writeTopology(string name)
 {
-    if (recvMode != RECV_MODE_NONE) return ZCM_EUNKNOWN;
+    if (runState != RunState::NONE && runState != RunState::PAUSED) return ZCM_EUNKNOWN;
     return zcm::writeTopology(name, receivedTopologyMap, sentTopologyMap);
 }
 
