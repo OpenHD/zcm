@@ -416,7 +416,6 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         // used by get()
         timeoutLeftUs = timeoutMs * 1e3;
 
-        // RRR (Bendes): Should receive until we run out of time
         size_t sz = get(rawBuf.data(), rawBuf.size(), this);
         if (sz == 0 || rawChan.empty()) return ZCM_EAGAIN;
 

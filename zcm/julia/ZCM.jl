@@ -270,8 +270,8 @@ function stop(zcm::Zcm)
     ccall(("zcm_stop", "libzcm"), Nothing, (Ptr{Native.Zcm},), zcm)
 end
 
-function handle(zcm::Zcm, timeout:Integer)
-    ccall(("zcm_handle", "libzcm"), Cint, (Ptr{Native.Zcm},Cint,), zcm, timeout)
+function handle(zcm::Zcm, timeout:Unsigned)
+    ccall(("zcm_handle", "libzcm"), Cint, (Ptr{Native.Zcm},Cuint,), zcm, timeout)
 end
 
 function set_queue_size(zcm::Zcm, num::Integer)

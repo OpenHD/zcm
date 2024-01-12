@@ -223,7 +223,6 @@ int zcm_nonblocking_flush(zcm_nonblocking_t* zcm)
     do {
         ret = ZCM_EOK;
 
-        /* Call twice because we need to make sure publish and subscribe are both handled */
         if (zcm_trans_update(zcm->zt) == ZCM_EAGAIN) ret = ZCM_EAGAIN;
 
         zcm_msg_t msg;
