@@ -201,6 +201,10 @@ int zcm_blocking_t::handle(unsigned timeoutMs)
 int zcm_blocking_t::setQueueSize(unsigned numMsgs)
 {
     // RRR (Bendes): When is the transport okay with the user calling this?
+    // RRR (xorvoid): For my understanding, can you explain why setQueueSize is being added? Is this for buffering during a Pause?
+    //                I'm trying to think how ipcshm would implement it. The queue memory is shared-ownership across all proceses and
+    //                generally cannot be resized safely at runtime (without complicated and heroic approaches). Unless, I'm misunderstanding
+    //                this slightly and it's intended to be a post-receive process-specific queue? Can you help me grok this?
     if (runState != RunState::NONE && runState != RunState::PAUSED) return ZCM_EINVALID;
     return zcm_trans_set_queue_size(zt, numMsgs);
 }
