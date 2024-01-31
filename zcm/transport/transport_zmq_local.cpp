@@ -490,9 +490,6 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     int setQueueSize(unsigned numMsgs)
     {
-        // RRR (Bendes): Evenly spread the buffer across all subscriptions?
-        subhwm = numMsgs / subsocks.size();
-        // RRR (Bendes): Or buffer that many messages per subscription?
         subhwm = numMsgs;
 
         bool succ = true;

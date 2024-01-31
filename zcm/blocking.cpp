@@ -102,8 +102,7 @@ struct zcm_blocking
     // These 2 mutexes used to implement a read-write style infrastructure on the subscription
     // lists. Both the recvThread and the message dispatch may read the subscriptions
     // concurrently, but subscribe() and unsubscribe() need both locks in order to write to it.
-    mutex subDispMutex;
-    mutex subRecvMutex;
+    mutex subMutex;
 
     thread recvThread;
 
@@ -149,6 +148,7 @@ void zcm_blocking_t::run()
         ZCM_DEBUG("Err: call to run() when 'runState != RunState::NONE'");
         return;
     }
+    runState = RunState::RUNNING;
 
     recvThreadFunc();
 }
@@ -166,14 +166,10 @@ void zcm_blocking_t::start()
 
 void zcm_blocking_t::stop()
 {
-    if (runState == RunState::RUNNING || runState == RunState::PAUSED) {
-        runState = RunState::STOP;
-        pauseCond.notify_all();
-        recvThread.join();
-        runState = RunState::NONE;
-    }
-    // Should we be flushing here?
-    while (handle(0) == ZCM_EOK);
+    if (runState != RunState::RUNNING && runState != RunState::PAUSED) return;
+    runState = RunState::STOP;
+    pauseCond.notify_all();
+    recvThread.join();
 }
 
 void zcm_blocking_t::pause()
@@ -233,7 +229,7 @@ int zcm_blocking_t::publish(const char* channel, const uint8_t* data, uint32_t l
     }
 #endif
 
-    return ZCM_EOK;
+    return ret;
 }
 
 // Note: We use a lock on subscribe() to make sure it can be
@@ -243,13 +239,11 @@ zcm_sub_t* zcm_blocking_t::subscribe(const string& channel,
                                      zcm_msg_handler_t cb, void* usr,
                                      bool block)
 {
-    unique_lock<mutex> lk1(subDispMutex, std::defer_lock);
-    unique_lock<mutex> lk2(subRecvMutex, std::defer_lock);
+    unique_lock<mutex> lk(subMutex, std::defer_lock);
     if (block) {
         // Intentionally locking in this order
-        lk1.lock();
-        lk2.lock();
-    } else if (!lk1.try_lock() || !lk2.try_lock()) {
+        lk.lock();
+    } else if (!lk.try_lock()) {
         return nullptr;
     }
     int rc;
@@ -285,13 +279,10 @@ zcm_sub_t* zcm_blocking_t::subscribe(const string& channel,
 // on modifying and reading the 'subs' and 'subsRegex' containers
 int zcm_blocking_t::unsubscribe(zcm_sub_t* sub, bool block)
 {
-    unique_lock<mutex> lk1(subDispMutex, std::defer_lock);
-    unique_lock<mutex> lk2(subRecvMutex, std::defer_lock);
+    unique_lock<mutex> lk(subMutex, std::defer_lock);
     if (block) {
-        // Intentionally locking in this order
-        lk1.lock();
-        lk2.lock();
-    } else if (!lk1.try_lock() || !lk2.try_lock()) {
+        lk.lock();
+    } else if (!lk.try_lock()) {
         return ZCM_EAGAIN;
     }
 
@@ -331,6 +322,8 @@ int zcm_blocking_t::flush()
 
 void zcm_blocking_t::recvThreadFunc()
 {
+    // Intentionally not setting runState = RUNNING because it could conflict
+    // with a start -> pause call order
     SET_THREAD_NAME("ZeroCM_receiver");
 
     while (true) {
@@ -338,7 +331,6 @@ void zcm_blocking_t::recvThreadFunc()
         if (runState == RunState::PAUSE) {
             runState = RunState::PAUSED;
             pauseCond.notify_all();
-
             unique_lock<mutex> lk(pauseCondLk);
             pauseCond.wait(lk, [this](){ return runState != RunState::PAUSED; });
         }
@@ -355,7 +347,6 @@ int zcm_blocking_t::recvOneMessage(unsigned timeout)
 {
     zcm_msg_t msg;
     int rc = zcm_trans_recvmsg(zt, &msg, timeout);
-    if (runState == RunState::STOP) return ZCM_EINTR;
     if (rc != ZCM_EOK) return rc;
     dispatchMsg(msg);
     return ZCM_EOK;
@@ -375,7 +366,7 @@ void zcm_blocking_t::dispatchMsg(const zcm_msg_t& msg)
     // zcm_unsubscribe from a callback without deadlocking.
     bool wasDispatched = false;
     {
-        unique_lock<mutex> lk(subDispMutex);
+        unique_lock<mutex> lk(subMutex);
 
         // dispatch to a non regex channel
         auto it = subs.find(msg.channel);
@@ -403,9 +394,7 @@ void zcm_blocking_t::dispatchMsg(const zcm_msg_t& msg)
         int64_t hashBE = 0, hashLE = 0;
         if (__int64_t_decode_array(msg.buf, 0, msg.len, &hashBE, 1) == 8 &&
             __int64_t_decode_little_endian_array(msg.buf, 0, msg.len, &hashLE, 1) == 8) {
-            if (lk.try_lock()) {
-                receivedTopologyMap[msg.channel].emplace(hashBE, hashLE);
-            }
+            receivedTopologyMap[msg.channel].emplace(hashBE, hashLE);
         }
     }
 #else
