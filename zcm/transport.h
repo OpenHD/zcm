@@ -93,10 +93,12 @@
  *      int set_queue_size(zcm_trans_t* zt, unsigned num_messages)
  *      --------------------------------------------------------------------
  *         This method instructs the transport that the user would like the
- *         transport to buffer exactly this many messages at most in between
- *         successive calls to recvmsg().
- *         If the transport is able to set its buffers to that size, it should
- *         return EOK otherwise it should return EAGAIN.
+ *         transport to buffer at least this many messages in between
+ *         successive calls to recvmsg(). This should be treated as a hint and
+ *         is not guaranteed by the transport. If the transport is able to set
+ *         its buffers to that size, it should return EOK, otherwise if it
+ *         wasn't able to set its buffers to that size, but may be able to in
+ *         the future, return EAGAIN, otherwise return ZCM_EINVALID.
  *
  *      int update(zcm_trans_t* zt);
  *      --------------------------------------------------------------------
@@ -166,10 +168,12 @@
  *      int set_queue_size(zcm_trans_t* zt, unsigned num_messages)
  *      --------------------------------------------------------------------
  *         This method instructs the transport that the user would like the
- *         transport to buffer exactly this many messages at most in between
- *         successive calls to recvmsg().
- *         If the transport is able to set its buffers to that size, it should
- *         return EOK otherwise it should return EAGAIN.
+ *         transport to buffer at least this many messages in between
+ *         successive calls to recvmsg(). This should be treated as a hint and
+ *         is not guaranteed by the transport. If the transport is able to set
+ *         its buffers to that size, it should return EOK, otherwise if it
+ *         wasn't able to set its buffers to that size, but may be able to in
+ *         the future, return EAGAIN, otherwise it should return an error.
  *
  *      int update(zcm_trans_t* zt)
  *      --------------------------------------------------------------------

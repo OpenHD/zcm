@@ -233,8 +233,9 @@ int serial_set_queue_size(zcm_trans_generic_serial_t *zt, unsigned num_messages)
 int serial_update_rx(zcm_trans_t *_zt)
 {
     zcm_trans_generic_serial_t* zt = cast(_zt);
+    if (cb_room(&zt->recvBuffer) == 0) return ZCM_EMEMORY;
     cb_flush_in(&zt->recvBuffer, zt->get, zt->put_get_usr);
-    return cb_room(&zt->recvBuffer) == 0 ? ZCM_EOK : ZCM_EAGAIN;
+    return cb_room(&zt->recvBuffer) == 0 ? ZCM_EAGAIN : ZCM_EOK;
 }
 
 int serial_update_tx(zcm_trans_t *_zt)

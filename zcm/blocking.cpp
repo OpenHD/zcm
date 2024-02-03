@@ -315,7 +315,7 @@ int zcm_blocking_t::flush()
         ret = recvOneMessage(0);
         if (ret == ZCM_EAGAIN) ret = ZCM_EOK;
         else if (ret == ZCM_EOK) ret = ZCM_EAGAIN;
-    } while(ret == ZCM_EAGAIN);
+    } while (ret == ZCM_EAGAIN);
 
     return ret;
 }

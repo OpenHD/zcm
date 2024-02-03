@@ -39,7 +39,8 @@ enum zcm_type {
     X(ZCM_EINTR   ,         -4, "Operation was unexpectedly interrupted") \
     X(ZCM_EUNKNOWN,         -5, "Unknown error"                         ) \
     X(ZCM_EMEMORY,          -6, "Out of memory"                         ) \
-    X(ZCM_NUM_RETURN_CODES,  7, "Invalid return code"                   )
+    X(ZCM_EUNSUPPORTED,     -7, "Unsupported functionality"             ) \
+    X(ZCM_NUM_RETURN_CODES,  8, "Invalid return code"                   )
 
 /* Return codes */
 enum zcm_return_codes {
@@ -126,9 +127,11 @@ int zcm_publish(zcm_t* zcm, const char* channel, const uint8_t* data, uint32_t l
  * timeout is in units of milliseconds */
 int zcm_handle(zcm_t* zcm, unsigned timeout);
 
-/* Block until all messages have been sent even if the underlying transport is
- * nonblocking. Additionally, dispatches messages continuously until it has no
- * more to dispatch already been received sequentially in this thread. */
+/* Dispatches messages continuously until it has no more to dispatch.
+ * This may run forever, if your handlers are too slow and you receive
+ * more messages in the time it takes all subscription handlers to run.
+ * If you want to guarantee a return, do something like:
+ * while(handle() == ZCM_EOK && ++i < n) */
 int zcm_flush(zcm_t* zcm);
 
 /* Request that the underlying transport queue at least this many messages.
