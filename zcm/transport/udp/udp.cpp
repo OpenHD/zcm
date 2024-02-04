@@ -390,8 +390,9 @@ int UDP::recvmsg(zcm_msg_t *msg, unsigned timeoutMs)
 
 int UDP::setQueueSize(unsigned numMsgs)
 {
-    // RRR (Bendes): Implement
-    return ZCM_EUNKNOWN;
+    // Can support this if desired in the future.
+    // Right now set kernel buffer sizes through sysctl
+    return ZCM_EUNSUPPORTED;
 }
 
 UDP::~UDP()
