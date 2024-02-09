@@ -119,7 +119,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     int setQueueSize(unsigned numMsgs)
     {
-        return ZCM_EUNKNOWN;
+        return ZCM_EUNSUPPORTED;
     }
 
     int update() { return ZCM_EOK; }

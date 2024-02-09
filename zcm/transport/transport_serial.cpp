@@ -456,7 +456,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     }
 
     int setQueueSize(unsigned numMsgs)
-    { return ZCM_EUNKNOWN; }
+    { return ZCM_EUNSUPPORTED; }
 
     /********************** STATICS **********************/
     static zcm_trans_methods_t methods, rawMethods;
@@ -504,6 +504,16 @@ zcm_trans_methods_t ZCM_TRANS_CLASSNAME::methods = {
     &ZCM_TRANS_CLASSNAME::_sendmsg,
     &ZCM_TRANS_CLASSNAME::_recvmsgEnable,
     &ZCM_TRANS_CLASSNAME::_recvmsg,
+    &ZCM_TRANS_CLASSNAME::_setQueueSize,
+    NULL, // update
+    &ZCM_TRANS_CLASSNAME::_destroy,
+};
+
+zcm_trans_methods_t ZCM_TRANS_CLASSNAME::rawMethods = {
+    &ZCM_TRANS_CLASSNAME::_getMtuRaw,
+    &ZCM_TRANS_CLASSNAME::_sendmsgRaw,
+    &ZCM_TRANS_CLASSNAME::_recvmsgEnableRaw,
+    &ZCM_TRANS_CLASSNAME::_recvmsgRaw,
     &ZCM_TRANS_CLASSNAME::_setQueueSize,
     NULL, // update
     &ZCM_TRANS_CLASSNAME::_destroy,

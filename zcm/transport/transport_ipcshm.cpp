@@ -214,7 +214,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return ZCM_EOK;
     }
 
-    int recvmsg_enable(const char *channel, bool enable)
+    int recvmsgEnable(const char *channel, bool enable)
     {
         return ZCM_EOK;
     }
@@ -270,6 +270,11 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return ZCM_EOK;
     }
 
+    int setQueueSize(unsigned numMsgs)
+    {
+        return ZCM_EUNSUPPORTED;
+    }
+
     /********************** STATICS **********************/
     static zcm_trans_methods_t methods;
     static ZCM_TRANS_CLASSNAME *cast(zcm_trans_t *zt)
@@ -284,11 +289,14 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     static int _sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
     { return cast(zt)->sendmsg(msg); }
 
-    static int _recvmsg_enable(zcm_trans_t *zt, const char *channel, bool enable)
-    { return cast(zt)->recvmsg_enable(channel, enable); }
+    static int _recvmsgEnable(zcm_trans_t *zt, const char *channel, bool enable)
+    { return cast(zt)->recvmsgEnable(channel, enable); }
 
     static int _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, unsigned timeout)
     { return cast(zt)->recvmsg(msg, timeout); }
+
+    static int _setQueueSize(zcm_trans_t *zt, unsigned numMsgs)
+    { return cast(zt)->setQueueSize(numMsgs); }
 
     static void _destroy(zcm_trans_t *zt)
     { delete cast(zt); }
@@ -300,8 +308,9 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 zcm_trans_methods_t ZCM_TRANS_CLASSNAME::methods = {
                                                     &ZCM_TRANS_CLASSNAME::_get_mtu,
                                                     &ZCM_TRANS_CLASSNAME::_sendmsg,
-                                                    &ZCM_TRANS_CLASSNAME::_recvmsg_enable,
+                                                    &ZCM_TRANS_CLASSNAME::_recvmsgEnable,
                                                     &ZCM_TRANS_CLASSNAME::_recvmsg,
+                                                    &ZCM_TRANS_CLASSNAME::_setQueueSize,
                                                     NULL, // update
                                                     &ZCM_TRANS_CLASSNAME::_destroy,
 };
