@@ -119,17 +119,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     int setQueueSize(unsigned numMsgs)
     {
-        std::unique_lock<mutex> lk(msgLock, defer_lock);
-        if (trans_type == ZCM_BLOCKING) lk.lock();
-
-        for (size_t i = numMsgs; i < msgs.size(); ++i) {
-            auto& msg = msgs[i];
-            free((void*)msg->channel);
-            delete[] msg->buf;
-            msgs.pop_back();
-        }
-        if (numMsgs < msgs.size()) msgs.resize(numMsgs);
-        return ZCM_EOK;
+        return ZCM_EUNKNOWN;
     }
 
     int update() { return ZCM_EOK; }

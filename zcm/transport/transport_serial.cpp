@@ -381,6 +381,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     int sendmsgRaw(zcm_msg_t msg)
     {
+        if (!msg.len) return ZCM_EOK;
         do {
             int ret = ser.write(msg.buf, msg.len);
 
@@ -401,8 +402,11 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         //       and touch no variables related to receiving
         int ret = zcm_trans_sendmsg(this->gst, msg);
         if (ret != ZCM_EOK) return ret;
-        while (serial_update_tx(this->gst) == ZCM_EAGAIN);
-        return ZCM_EOK;
+        while (true) {
+            ret = serial_update_tx(this->gst);
+            if (ret != ZCM_EAGAIN) break;
+        }
+        return ret;
     }
 
     int recvmsgEnableRaw(const char* channel, bool enable)
@@ -429,10 +433,9 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     int recvmsg(zcm_msg_t* msg, unsigned timeoutMs)
     {
-        timeoutLeftUs = timeoutMs * 1e3;
+        uint64_t endUtime = TimeUtil::utime() + timeoutMs * 1e3;
 
         do {
-            uint64_t startUtime = TimeUtil::utime();
 
             // Note: No need to lock here ONLY because the internals of
             //       generic serial transport recvmsg only use the recv related
@@ -440,19 +443,14 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
             int ret = zcm_trans_recvmsg(this->gst, msg, 0);
             if (ret == ZCM_EOK) return ret;
 
-            uint64_t diff = TimeUtil::utime() - startUtime;
-            startUtime = TimeUtil::utime();
             // Note: timeoutLeftUs is calculated here because serial_update_rx
             //       needs it to be set properly so that the blocking read in
             //       `get` knows how long it has to exit
-            timeoutLeftUs = timeoutLeftUs > diff ? timeoutLeftUs - diff : 0;
-
+            uint64_t now = TimeUtil::utime();
+            timeoutLeftUs = endUtime < now ? 0 : endUtime - now;
             serial_update_rx(this->gst);
 
-            diff = TimeUtil::utime() - startUtime;
-            timeoutLeftUs = timeoutLeftUs > diff ? timeoutLeftUs - diff : 0;
-
-        } while (timeoutLeftUs > 0);
+        } while (TimeUtil::utime() < endUtime);
 
         return ZCM_EAGAIN;
     }
