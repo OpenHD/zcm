@@ -30,7 +30,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt update
-          sudo apt install -y ruby-dev python3 python3-pip libzmq3-dev libgtk-3-dev libelf-dev libjna-jni default-jdk nodejs npm libzmq-jni libzmq5 libzmqpp-dev build-essential
+          sudo apt install -y ruby-dev python3 python3-pip libzmq3-dev libgtk-3-dev libelf-dev libjna-jni default-jdk nodejs npm libzmq-jni libzmq5 build-essential
           sudo pip3 install cython
           sudo gem install fpm
           
