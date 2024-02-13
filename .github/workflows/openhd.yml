@@ -35,10 +35,11 @@ jobs:
           
       - name: Build with make
         run: |
+          mkdir -p /tmp/zcm
           ./waf configure --use-all          
           ./waf build
-          sudo ./waf install
-          ls -a
+          sudo ./waf install --prefix=/tmp/zcm
+          ls -a /tmp/zcm
 
       # - name: Upload to Github
       #   uses: 'actions/upload-artifact@v2'
