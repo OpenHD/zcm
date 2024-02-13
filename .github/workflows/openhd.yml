@@ -36,9 +36,9 @@ jobs:
       - name: Build with make
         run: |
           mkdir -p /tmp/zcm
-          ./waf configure --use-all          
+          ./waf configure --use-all --prefix=/tmp/zcm      
           ./waf build
-          sudo ./waf install --prefix=/tmp/zcm
+          sudo ./waf install
           ls -a /tmp/zcm
 
       # - name: Upload to Github
