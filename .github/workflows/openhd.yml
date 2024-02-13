@@ -29,8 +29,8 @@ jobs:
           submodules: recursive
       - name: Install Dependencies
         run: |
-          apt update
-          apt install -y python build-essential
+          sudo apt update
+          sudo apt install -y python build-essential
           
       - name: Build with make
         run: |
