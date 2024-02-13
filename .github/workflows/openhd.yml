@@ -30,8 +30,9 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt update
-          sudo apt install -y python3 python3-pip libzmq3-dev libgtk-3-dev libelf-dev build-essential
+          sudo apt install -y ruby-dev python3 python3-pip libzmq3-dev libgtk-3-dev libelf-dev build-essential
           sudo pip3 install cython
+          gem install fpm
           
       - name: Build with make
         run: |
@@ -40,27 +41,15 @@ jobs:
           ./waf build
           sudo ./waf install
           ls -a /tmp/zcm
+          VERSION="1.1.5-$(date +'%m/%d/%Y')"
+          VERSION=$(echo "$VERSION" | sed 's/\//-/g')
+          fpm -a x86_64 -s dir -t deb -n zcm -v "$VERSION" -C /tmp/zcm -p zcm_VERSION_ARCH.deb
 
-      # - name: Upload to Github
-      #   uses: 'actions/upload-artifact@v2'
-      #   with:
-      #     name: "OpenHD"
-      #     path: |
-      #       *.deb
-      #       *.log
-      #     if-no-files-found: error
-
-      # - name: Push
-      #   id: push
-      #   uses: cloudsmith-io/action@master
-      #   with:
-      #     api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
-      #     command: "push"
-      #     format: "deb"
-      #     owner: "openhd"
-      #     repo: ${{ github.ref_name }}
-      #     distro: "ubuntu"
-      #     release: "jammy"
-      #     republish: "true" # needed ONLY if version is not changing
-      #     file: "*.deb"
-      #   if: ${{ github.ref != 'refs/heads/2.5-evo' }}
+      - name: Upload to Github
+        uses: 'actions/upload-artifact@v2'
+        with:
+          name: "OpenHD"
+          path: |
+            *.deb
+            *.log
+          if-no-files-found: error
