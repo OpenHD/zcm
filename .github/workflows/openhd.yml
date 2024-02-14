@@ -44,7 +44,7 @@ jobs:
         with:
           name: "zcm"
           path: |
-            *.deb
+            build/*.deb
             *.log
           if-no-files-found: error
 
@@ -60,4 +60,4 @@ jobs:
           distro: "ubuntu"
           release: "jammy"
           republish: "true" # needed ONLY if version is not changing
-          file: "*.deb"
+          file: "build/*.deb"
