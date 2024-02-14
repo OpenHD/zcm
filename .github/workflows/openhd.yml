@@ -36,14 +36,8 @@ jobs:
           
       - name: Build with make
         run: |
-          mkdir -p /tmp/zcm
-          ./waf configure --use-all --prefix=/tmp/zcm      
-          ./waf build
-          sudo ./waf install
-          ls -a /tmp/zcm
-          VERSION="1.1.5-$(date +'%m/%d/%Y')"
-          VERSION=$(echo "$VERSION" | sed 's/\//-/g')
-          fpm -a x86_64 -s dir -t deb -n zcm -v "$VERSION" -C /tmp/zcm -p zcm_VERSION_ARCH.deb -d "dbus-x11"
+          scripts/install-deps.sh
+          scripts/make_debian_package.sh
 
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
